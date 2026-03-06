@@ -2,319 +2,320 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Operativo Aramark - Landing</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f8f9fa;
-            color: #333;
-            font-size: 14px;
-        }
-        .top-nav {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background-color: #d20000;
-            padding: 10px 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            position: fixed;
-            width: 100%;
-            top: 0;
-            z-index: 1000;
-        }
-        .top-nav-left button {
-            background-color: #007bff;
-            color: #fff;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .top-nav-left button:hover {
-            background-color: #0056b3;
-        }
-        .top-nav-center {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-        }
-        .top-nav-right button {
-            margin-left: 10px;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .search-input {
-            width: 50%;
-            max-width: 600px;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        .btn-red {
-            background-color: #dc3545;
-            color: #fff;
-        }
-        .btn-blue {
-            background-color: #007bff;
-            color: #fff;
-        }
-        .btn-gray {
-            background-color: #6c757d;
-            color: #fff;
-        }
-        .hero {
-            background-image: url('https://www.alliant.edu/wp-content/uploads/2025/10/istock-2209242819.jpg');
-            background-size: cover;
-            background-position: center;
-            height: 300px;
-            position: relative;
-            color: #fff;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            margin-top: 60px;
-        }
-        .hero-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-        }
-        .hero-content {
-            position: relative;
-            z-index: 1;
-        }
-        .hero h1 {
-            font-size: 36px;
-            margin: 0;
-        }
-        .hero p {
-            font-size: 20px;
-            margin: 10px 0 20px;
-        }
-        .hero-buttons {
-            position: absolute;
-            top: 10px; /* Movido más cerca del borde superior */
-            right: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-        }
-        .hero-btn {
-            background-color: #dc3545;
-            color: #fff;
-            padding: 10px 20px;
-            margin-bottom: 5px; /* Reducido para que queden más juntos verticalmente */
-            border-radius: 4px;
-            text-decoration: none;
-            font-size: 14px;
-            transition: background-color 0.2s;
-        }
-        .hero-btn:hover {
-            background-color: #c82333;
-        }
-        .categories {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            padding: 40px 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .category-card {
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            cursor: pointer;
-            transition: transform 0.3s, box-shadow 0.3s;
-            position: relative;
-        }
-        .category-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-        }
-        .category-card img {
-            width: 100%;
-            height: 180px;
-            object-fit: cover;
-            transition: filter 0.3s;
-        }
-        .category-card:hover img {
-            filter: brightness(70%);
-        }
-        .category-card button {
-            width: 100%;
-            background-color: #007bff;
-            color: #fff;
-            border: none;
-            padding: 12px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .category-card button:hover {
-            background-color: #0056b3;
-        }
-        .sub-buttons {
-            display: none;
-            position: absolute;
-            top: 10px; /* Ajustado para estar más cerca del borde superior de la imagen */
-            left: 50%;
-            transform: translateX(-50%); /* Centrado horizontalmente, sin transformación vertical */
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: center;
-            background: none;
-            box-shadow: none;
-            z-index: 2;
-        }
-        .category-card:hover .sub-buttons {
-            display: flex;
-        }
-        .sub-button {
-            width: auto;
-            min-width: 200px;
-            background-color: #dc3545; /* Color rojo */
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            border-radius: 4px;
-            margin: 5px 0; /* Reducido para que queden más juntos verticalmente */
-        }
-        .sub-button:hover {
-            background-color: #c82333;
-        }
-        footer {
-            text-align: center;
-            padding: 15px;
-            background-color: #fff;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
-            font-size: 12px;
-            color: #6c757d;
-        }
-        .page-description {
-            max-width: 1200px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            font-size: 14px;
-            line-height: 1.6;
-        }
-    </style>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Portal Operativo Aramark - Landing</title>
+ <style>
+ body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f8f9fa;
+  color: #333;
+  font-size: 14px;
+ }
+ .top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #d20000;
+  padding: 10px 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 1000;
+ }
+ .top-nav-left button {
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+ }
+ .top-nav-left button:hover {
+  background-color: #0056b3;
+ }
+ .top-nav-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+ }
+ .top-nav-right button {
+  margin-left: 10px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+ }
+ .search-input {
+  width: 50%;
+  max-width: 600px;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+ }
+ .btn-red {
+  background-color: #dc3545;
+  color: #fff;
+ }
+ .btn-blue {
+  background-color: #007bff;
+  color: #fff;
+ }
+ .btn-gray {
+  background-color: #6c757d;
+  color: #fff;
+ }
+ .hero {
+  background-image: url('https://www.alliant.edu/wp-content/uploads/2025/10/istock-2209242819.jpg');
+  background-size: cover;
+  background-position: center;
+  height: 300px;
+  position: relative;
+  color: #fff;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-top: 60px;
+ }
+ .hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+ }
+ .hero-content {
+  position: relative;
+  z-index: 1;
+ }
+ .hero h1 {
+  font-size: 36px;
+  margin: 0;
+ }
+ .hero p {
+  font-size: 20px;
+  margin: 10px 0 20px;
+ }
+ .hero-buttons {
+  position: absolute;
+  top: 10px; /* Movido más cerca del borde superior */
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+ }
+ .hero-btn {
+  background-color: #dc3545;
+  color: #fff;
+  padding: 10px 20px;
+  margin-bottom: 5px; /* Reducido para que queden más juntos verticalmente */
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 14px;
+  transition: background-color 0.2s;
+ }
+ .hero-btn:hover {
+  background-color: #c82333;
+ }
+ .categories {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  padding: 40px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+ }
+ .category-card {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s;
+  position: relative;
+ }
+ .category-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+ }
+ .category-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  transition: filter 0.3s;
+ }
+ .category-card:hover img {
+  filter: brightness(70%);
+ }
+ .category-card button {
+  width: 100%;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  padding: 12px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+ }
+ .category-card button:hover {
+  background-color: #0056b3;
+ }
+ .sub-buttons {
+  display: none;
+  position: absolute;
+  top: 10px; /* Ajustado para estar más cerca del borde superior de la imagen */
+  left: 50%;
+  transform: translateX(-50%); /* Centrado horizontalmente, sin transformación vertical */
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  background: none;
+  box-shadow: none;
+  z-index: 2;
+ }
+ .category-card:hover .sub-buttons {
+  display: flex;
+ }
+ .sub-button {
+  width: auto;
+  min-width: 200px;
+  background-color: #dc3545; /* Color rojo */
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border-radius: 4px;
+  margin: 5px 0; /* Reducido para que queden más juntos verticalmente */
+ }
+ .sub-button:hover {
+  background-color: #c82333;
+ }
+ footer {
+  text-align: center;
+  padding: 15px;
+  background-color: #fff;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+  font-size: 12px;
+  color: #6c757d;
+ }
+ .page-description {
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  font-size: 14px;
+  line-height: 1.6;
+ }
+ </style>
 <style>
-    /* Variables de marca referenciales y estilos generales */
-    :root {
-        --brand-red: #d20000;
-        --brand-dark: #333333;
-        --bg-color: #f4f7f6;
-        --border-color: #e0e0e0;
-        --active-bg: #ffebeb;
-    }
-    
-    /* Cabecera */
-    header { 
-        background-color: var(--brand-red); 
-        color: white; 
-        padding: 15px 30px; 
-        display: flex; justify-content: space-between; align-items: center; 
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-    .nav-links a { color: white; text-decoration: none; margin-left: 20px; font-size: 0.9em; }
+ /* Variables de marca referenciales y estilos generales */
+ :root {
+  --brand-red: #d20000;
+  --brand-dark: #333333;
+  --bg-color: #f4f7f6;
+  --border-color: #e0e0e0;
+  --active-bg: #ffebeb;
+ }
+ /* Cabecera */
+ header {
+  background-color: var(--brand-red);
+  color: white;
+  padding: 15px 30px;
+  display: flex; justify-content: space-between; align-items: center;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+ }
+ .nav-links a { color: white; text-decoration: none; margin-left: 20px; font-size: 0.9em; }
 </style>
-
 <header>
-    <div style="font-size: 1.2em; font-weight: bold;">Landing</div>
+ <div style="font-size: 1.2em; font-weight: bold;">Landing</div>
 </header>
+ <section class="hero">
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+   <h1>Contratos Centralizados Aramark</h1>
+   <p>Herramientas que facilitan tu trabajo diario</p>
+  </div>
+ </section>
+ <!-- Sección añadida para mostrar la descripción visible en la página -->
+ <section class="page-description">
+  <h2>Descripción de la Página</h2>
+  <p>Esta es la página principal de aterrizaje (landing page) del Portal Operativo Aramark, diseñada como el hub central desde donde los usuarios autenticados pueden acceder tanto a las funcionalidades de operaciones generales (como contabilización de guías, registro masivo de inventarios y gestión de centros de costo) como a las herramientas de reportabilidad. La página verifica el perfil del usuario almacenado en localStorage (admin, operador o reporter) y muestra solo las secciones relevantes según los permisos, redirigiendo a index.html si no hay sesión activa. Incluye una barra de navegación superior fija, una sección hero con imagen de fondo y overlay para resaltar el título y descripción, un grid de tarjetas de categorías con efectos hover (incluyendo sub-botones que aparecen al pasar el mouse), información del usuario en el centro, y un footer fijo. Además, incorpora funcionalidad de scroll automático suave al hover sobre tarjetas parcialmente visibles para mejorar la usabilidad en pantallas con scroll.</p>
+ </section>
+ <section class="categories">
+  <div class="category-card" id="operaciones-card">
+   <img src="https://www.fftcaters.com/blog/wp-content/uploads/2025/04/Buffet-Catering-Services-Newnan-GA.jpg" alt="Operaciones Generales">
+   <button>Operaciones Generales</button>
+   <div class="sub-buttons">
+    <button class="sub-button" onclick="window.location.href = 'contabilizacion.html';">Contabilización de Guías</button>
+    <button class="sub-button" onclick="window.location.href = 'registro_masivo_inventarios.html';">Registro masivo de inventarios</button>
+    <button class="sub-button" onclick="window.location.href = 'centros_de_costo.html';">CECOS Centralizados</button>
+   </div>
+  </div>
 
-    <section class="hero">
-        <div class="hero-overlay"></div>
-        <div class="hero-content">
-            <h1>Contratos Centralizados Aramark</h1>
-            <p>Herramientas que facilitan tu trabajo diario</p>
-        </div>
-      
-    </section>
-    
-    <!-- Sección añadida para mostrar la descripción visible en la página -->
-    <section class="page-description">
-        <h2>Descripción de la Página</h2>
-        <p>Esta es la página principal de aterrizaje (landing page) del Portal Operativo Aramark, diseñada como el hub central desde donde los usuarios autenticados pueden acceder tanto a las funcionalidades de operaciones generales (como contabilización de guías, registro masivo de inventarios y gestión de centros de costo) como a las herramientas de reportabilidad. La página verifica el perfil del usuario almacenado en localStorage (admin, operador o reporter) y muestra solo las secciones relevantes según los permisos, redirigiendo a index.html si no hay sesión activa. Incluye una barra de navegación superior fija, una sección hero con imagen de fondo y overlay para resaltar el título y descripción, un grid de tarjetas de categorías con efectos hover (incluyendo sub-botones que aparecen al pasar el mouse), información del usuario en el centro, y un footer fijo. Además, incorpora funcionalidad de scroll automático suave al hover sobre tarjetas parcialmente visibles para mejorar la usabilidad en pantallas con scroll.</p>
-    </section>
-    
-    <section class="categories">
-        <div class="category-card" id="operaciones-card">
-            <img src="https://www.fftcaters.com/blog/wp-content/uploads/2025/04/Buffet-Catering-Services-Newnan-GA.jpg" alt="Operaciones Generales">
-            <button>Operaciones Generales</button>
+  <div class="category-card" id="reportabilidad-card">
+   <img src="https://thumbs.dreamstime.com/b/business-data-analytics-dashboard-computer-screen-showing-various-charts-graphs-close-up-computer-monitor-displaying-417414967.jpg" alt="Reportabilidad">
+   <button>Reportabilidad</button>
+   <!-- NUEVO: sub-botones como en Operaciones Generales -->
+   <div class="sub-buttons">
+    <button class="sub-button" onclick="window.location.href = 'facturas.html';">Facturas</button>
+    <button class="sub-button" onclick="window.location.href = 'pedidos.html';">Pedidos</button>
+   </div>
+  </div>
+ </section>
 
-            <div class="sub-buttons">
-                <button class="sub-button" onclick="window.location.href = 'contabilizacion.html';">Contabilización de Guías</button>
-          <button class="sub-button" onclick="window.location.href = 'registro_masivo_inventarios.html';">Registro masivo de inventarios</button>
-        <button class="sub-button" onclick="window.location.href = 'centros_de_costo.html';">CECOS Centralizados</button>
-            </div>
-        </div>
-        <div class="category-card" id="reportabilidad-card">
-            <img src="https://thumbs.dreamstime.com/b/business-data-analytics-dashboard-computer-screen-showing-various-charts-graphs-close-up-computer-monitor-displaying-417414967.jpg" alt="Reportabilidad">
-            <button>Reportabilidad</button>
-        </div>
-    </section>
-    <p id="user-info" style="text-align: center; margin: 20px 0; font-size: 16px;"></p>
+ <p id="user-info" style="text-align: center; margin: 20px 0; font-size: 16px;"></p>
 
-    <footer>
-        Prototipo Completo para Sistema Aramark © 2026
-    </footer>
+ <footer>
+  Prototipo Completo para Sistema Aramark © 2026
+ </footer>
 
-    <script>
-        const user = localStorage.getItem('user');
-        const profile = localStorage.getItem('profile');
-        if (user && profile) {
-            document.getElementById('user-info').innerText = `Usuario: ${user} - Perfil: ${profile.toUpperCase()}`;
-            if (profile !== 'admin' && profile !== 'operador') {
-                document.getElementById('operaciones-card').style.display = 'none';
-            }
-            if (profile !== 'admin' && profile !== 'reporter') {
-                document.getElementById('reportabilidad-card').style.display = 'none';
-            }
-        } else {
-            window.location.href = 'index.html';
-        }
+ <script>
+ const user = localStorage.getItem('user');
+ const profile = localStorage.getItem('profile');
 
-        // Agregar funcionalidad de scroll automático al hover sobre tarjetas parcialmente visibles
-        document.querySelectorAll('.category-card').forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                const rect = this.getBoundingClientRect();
-                const navHeight = document.querySelector('.top-nav').offsetHeight; // Offset para la barra superior fija
-                if (rect.bottom > window.innerHeight || rect.top > window.innerHeight) {
-                    // Si la tarjeta está parcialmente abajo o completamente abajo, scroll suave para llevar su top al viewport top (con offset)
-                    const scrollToPosition = window.scrollY + rect.top - navHeight - 10; // Pequeño margen extra
-                    window.scrollTo({
-                        top: scrollToPosition,
-                        behavior: 'smooth'
-                    });
-                }
-            });
-        });
-    </script>
+ if (user && profile) {
+   document.getElementById('user-info').innerText = `Usuario: ${user} - Perfil: ${profile.toUpperCase()}`;
+   if (profile !== 'admin' && profile !== 'operador') {
+     document.getElementById('operaciones-card').style.display = 'none';
+   }
+   if (profile !== 'admin' && profile !== 'reporter') {
+     document.getElementById('reportabilidad-card').style.display = 'none';
+   }
+ } else {
+   window.location.href = 'index.html';
+ }
+
+ // Agregar funcionalidad de scroll automático al hover sobre tarjetas parcialmente visibles
+ document.querySelectorAll('.category-card').forEach(card => {
+   card.addEventListener('mouseenter', function() {
+     const rect = this.getBoundingClientRect();
+     const navHeight = document.querySelector('.top-nav').offsetHeight; // Offset para la barra superior fija
+     if (rect.bottom > window.innerHeight || rect.top > window.innerHeight) {
+       // Si la tarjeta está parcialmente abajo o completamente abajo, scroll suave para llevar su top al viewport top (con offset)
+       const scrollToPosition = window.scrollY + rect.top - navHeight - 10; // Pequeño margen extra
+       window.scrollTo({
+         top: scrollToPosition,
+         behavior: 'smooth'
+       });
+     }
+   });
+ });
+ </script>
 </body>
 </html>

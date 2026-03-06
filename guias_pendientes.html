@@ -1,0 +1,398 @@
+<!-- Archivo: guias_pendientes.html (Página de Guías Pendientes) -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guías Pendientes</title>
+    <!-- Librería Chart.js requerida para los gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Variables de marca referenciales y estilos generales */
+        :root {
+            --brand-red: #d20000;
+            --brand-dark: #333333;
+            --bg-color: #f4f7f6;
+            --border-color: #e0e0e0;
+            --active-bg: #ffebeb;
+        }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; padding: 0; 
+            background-color: var(--bg-color); 
+            color: var(--brand-dark); 
+        }
+        
+        /* Cabecera */
+        header { 
+            background-color: var(--brand-red); 
+            color: white; 
+            padding: 15px 30px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .nav-links a { color: white; text-decoration: none; margin-left: 20px; font-size: 0.9em; }
+        
+        .container { padding: 30px; max-width: 1200px; margin: auto; }
+        h2 { border-bottom: 3px solid var(--brand-red); padding-bottom: 10px; margin-top: 0; }
+        
+        /* Cuadrícula de KPIs Interactivos */
+        .kpi-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+            gap: 20px; 
+            margin-bottom: 25px; 
+        }
+        
+        /* Estilos de las Tarjetas */
+        .kpi-card { 
+            background: white; padding: 20px; border-radius: 8px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .kpi-card:hover { 
+            transform: translateY(-5px); 
+            border-color: var(--brand-red);
+            box-shadow: 0 6px 12px rgba(210,0,0,0.15);
+        }
+
+        .kpi-card h3 { margin: 0 0 10px 0; font-size: 0.85em; color: #666; text-transform: uppercase;}
+        .kpi-card .value { font-size: 2em; font-weight: bold; color: var(--brand-dark); }
+
+        /* Cuadrícula de Gráficos */
+        .charts-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+            gap: 20px; 
+            margin-bottom: 25px; 
+        }
+
+        /* Área de Gráfico */
+        .chart-section {
+            background: white; padding: 25px; border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+            border: 1px solid var(--border-color);
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .chart-container { position: relative; height: 300px; width: 100%; }
+        
+        /* Alertas y Tabla */
+        .grid-2-cols { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+        @media (max-width: 800px) { .grid-2-cols { grid-template-columns: 1fr; } }
+        
+        .panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid var(--border-color); }
+        .panel-title { margin-top: 0; font-size: 1.1em; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;}
+        
+        .alert-item { background: #fffafa; padding: 12px; border-left: 4px solid var(--brand-red); margin-bottom: 12px; border-radius: 4px; border: 1px solid #ffebeb; border-left-width: 4px; font-size: 0.9em;}
+        .btn { background-color: var(--brand-red); color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; margin-top: 8px; font-weight: bold;}
+        
+        table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        th, td { border-bottom: 1px solid var(--border-color); padding: 10px; text-align: left; }
+        th { background-color: #f8f9fa; color: #555; }
+
+        /* Form Styles */
+        form { display: flex; flex-direction: column; gap: 10px; }
+        input[type="text"], input[type="file"] { padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; }
+        button[type="submit"] { background-color: var(--brand-red); color: white; border: none; padding: 10px; cursor: pointer; border-radius: 4px; }
+        button[type="submit"]:hover { background-color: #b30000; }
+
+        /* Filters */
+        .filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: center; }
+        .filters input { padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; min-width: 150px; }
+        .process-all-btn { background-color: var(--brand-red); color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; }
+        .process-all-btn:hover { background-color: #b30000; }
+
+        /* Note */
+        .note { font-style: italic; color: #6c757d; margin-bottom: 20px; font-size: 0.9em; }
+
+        /* Action Buttons */
+        .action-btn { background-color: var(--brand-red); color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; margin-right: 5px; }
+        .action-btn:hover { background-color: #b30000; }
+
+        /* Pagination */
+        .pagination { display: flex; justify-content: center; margin-top: 15px; }
+        .pagination button { margin: 0 5px; padding: 8px 12px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .pagination button.active { background-color: #0056b3; }
+        .pagination button:hover { background-color: #0056b3; }
+
+        /* Sortable Headers */
+        th.sortable { cursor: pointer; }
+        th.sortable:hover { background-color: #e9ecef; }
+
+        .page-description {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div style="font-size: 1.2em; font-weight: bold;">Guías Pendientes</div>
+        <div class="nav-links"><a href="#">Mapa de Aplicaciones</a> <a href="contabilizacion.html">Volver</a></div>
+    </header>
+
+    <div class="container">
+        <h2>Visión General de Guías Pendientes</h2>
+        
+        <!-- Sección añadida para mostrar la descripción visible en la página -->
+        <section class="page-description">
+            <h2>Descripción de la Página</h2>
+            <p>Esta página muestra las guías pendientes de procesamiento en el sistema de contabilización de Aramark. Incluye KPIs como el total de guías pendientes y CECOS únicos, un gráfico de distribución por CECOS para una visión general rápida, filtros avanzados por guía ID, CECOS, agrupador, regla y faltante, una tabla interactiva con opciones de ordenamiento, selección múltiple y procesamiento individual o masivo de guías. Simula la ingesta automática de datos cada hora para mantener la lista actualizada y optimizada. Las guías pendientes provienen de un workflow donde se capturan constantemente los datos desde una vista de la Base de datos de Brand que muestra las guías despachadas desde el CD; finalmente, si la guía pendiente cumple las reglas, es procesada en Brand automáticamente con un BOT.</p>
+        </section>
+
+        <!-- Fila 1: KPIs -->
+        <div class="kpi-grid">
+            <div class="kpi-card" id="card-total">
+                <h3>Total Guías Pendientes</h3>
+                <div class="value">0</div>
+            </div>
+            <div class="kpi-card" id="card-cecos-unicos">
+                <h3>CECOS Únicos</h3>
+                <div class="value">0</div>
+            </div>
+        </div>
+
+        <!-- Fila 2: Gráficos -->
+        <div class="charts-grid">
+            <div class="chart-section">
+                <h3 style="margin-top: 0; color: #d20000;">Distribución por CECOS</h3>
+                <div class="chart-container">
+                    <canvas id="chartCecos"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <p class="note">Lista de guías pendientes de procesamiento (posiciones de muestra generadas dinámicamente para optimización). Simula ingesta automática cada hora.</p>
+
+        <div class="filters">
+            <input type="text" id="filter-guia" placeholder="Filtrar Guía ID">
+            <input type="text" id="filter-cecos" placeholder="Filtrar CECOS">
+            <input type="text" id="filter-agrupador" placeholder="Filtrar Agrupador">
+            <input type="text" id="filter-regla" placeholder="Filtrar Regla">
+            <input type="text" id="filter-faltante" placeholder="Filtrar Faltante">
+            <label><input type="checkbox" id="select-all"> Seleccionar todo</label>
+            <button class="process-all-btn">Procesar todo</button>
+        </div>
+
+        <div class="panel" style="overflow-x: auto;">
+            <h3 class="panel-title">Lista de Guías Pendientes</h3>
+            <table id="guias-table">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" disabled></th>
+                        <th class="sortable" onclick="sortTable('guiaId')">Guía ID</th>
+                        <th class="sortable" onclick="sortTable('cecos')">CECOS</th>
+                        <th class="sortable" onclick="sortTable('agrupador')">Agrupador</th>
+                        <th class="sortable" onclick="sortTable('regla')">Regla</th>
+                        <th class="sortable" onclick="sortTable('faltante')">Faltante</th>
+                        <th class="sortable" onclick="sortTable('estado')">Estado</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="guias-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <footer>
+        Prototipo Completo para Sistema Aramark © 2026
+    </footer>
+
+    <!-- Script de Gestión y Gráficos -->
+    <script>
+        // Configuración inicial de Chart.js
+        Chart.defaults.font.family = "'Segoe UI', sans-serif";
+
+        // Datos iniciales de guías
+        let guias = [];
+        const cecosList = [55016, 41640, 30227, 30296, 32164, 32161, 32166, 32163, 32162, 32168];
+        const agrupadorMap = new Map([
+            [55016, 'BOD Clinica Alemana'],
+            [41640, 'BOD Clin Davila'],
+            [30227, 'Escondida Food'],
+            [30296, 'Escondida Another'],
+            [32164, 'Arauco La Colcha'],
+            [32161, 'Arauco Another'],
+            [32166, 'Arauco B'],
+            [32163, 'Arauco C'],
+            [32162, 'Arauco D'],
+            [32168, 'Arauco E']
+        ]);
+        const reglas = ['Inmediato', '48 horas', 'Excepción'];
+
+        let sortField = 'guiaId';
+        let sortAsc = true;
+
+        // Generar datos iniciales
+        function generateInitialGuias() {
+            let guiaIdCounter = 1;
+            cecosList.forEach(ceco => {
+                const count = Math.floor(Math.random() * 7) + 6; // Random between 6 and 12
+                for (let i = 0; i < count; i++) {
+                    const guiaId = guiaIdCounter.toString().padStart(3, '0');
+                    const agrupador = agrupadorMap.get(ceco) || 'Desconocido';
+                    const regla = reglas[Math.floor(Math.random() * reglas.length)];
+                    let faltante = '';
+                    if (regla === 'Inmediato') {
+                        faltante = 'N/A';
+                    } else if (regla === '48 horas') {
+                        const horas = Math.floor(Math.random() * 48) + 1;
+                        faltante = `${horas} horas restantes`;
+                    } else if (regla === 'Excepción') {
+                        const day = Math.floor(Math.random() * 30) + 1;
+                        faltante = `Hasta 2026-03-${day.toString().padStart(2, '0')}`;
+                    }
+                    guias.push({ guiaId, cecos: ceco, agrupador, regla, faltante, estado: 'Pendiente' });
+                    guiaIdCounter++;
+                }
+            });
+        }
+
+        // Función para ordenar la tabla
+        function sortTable(field) {
+            if (sortField === field) {
+                sortAsc = !sortAsc;
+            } else {
+                sortField = field;
+                sortAsc = true;
+            }
+            guias.sort((a, b) => {
+                let valA = a[field];
+                let valB = b[field];
+                if (typeof valA === 'string') valA = valA.toLowerCase();
+                if (typeof valB === 'string') valB = valB.toLowerCase();
+                if (valA < valB) return sortAsc ? -1 : 1;
+                if (valA > valB) return sortAsc ? 1 : -1;
+                return 0;
+            });
+            renderTable();
+        }
+
+        // Función para renderizar la tabla
+        function renderTable() {
+            const tbody = document.getElementById('guias-tbody');
+            tbody.innerHTML = '';
+            const filterGuia = document.getElementById('filter-guia')?.value.toLowerCase() || '';
+            const filterCecos = document.getElementById('filter-cecos')?.value.toLowerCase() || '';
+            const filterAgrupador = document.getElementById('filter-agrupador')?.value.toLowerCase() || '';
+            const filterRegla = document.getElementById('filter-regla')?.value.toLowerCase() || '';
+            const filterFaltante = document.getElementById('filter-faltante')?.value.toLowerCase() || '';
+            const filteredGuias = guias.filter(g => 
+                g.guiaId.toLowerCase().includes(filterGuia) &&
+                g.cecos.toString().toLowerCase().includes(filterCecos) &&
+                g.agrupador.toLowerCase().includes(filterAgrupador) &&
+                g.regla.toLowerCase().includes(filterRegla) &&
+                g.faltante.toLowerCase().includes(filterFaltante)
+            );
+            filteredGuias.forEach(g => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><input type="checkbox" class="row-checkbox"></td>
+                    <td>${g.guiaId}</td>
+                    <td>${g.cecos}</td>
+                    <td>${g.agrupador}</td>
+                    <td>${g.regla}</td>
+                    <td>${g.faltante}</td>
+                    <td>${g.estado}</td>
+                    <td><button class="action-btn" onclick="processGuia('${g.guiaId}')">Procesar</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Función para renderizar KPIs
+        function renderKPIs() {
+            const total = guias.length;
+            const cecosUnicos = new Set(guias.map(g => g.cecos)).size;
+
+            document.querySelector('#card-total .value').textContent = total;
+            document.querySelector('#card-cecos-unicos .value').textContent = cecosUnicos;
+        }
+
+        // Función para renderizar gráficos
+        function renderCharts() {
+            // Datos para CECOS
+            const cecosCounts = guias.reduce((acc, g) => {
+                acc[g.cecos] = (acc[g.cecos] || 0) + 1;
+                return acc;
+            }, {});
+            const cecosLabels = Object.keys(cecosCounts);
+            const cecosData = Object.values(cecosCounts);
+
+            // Gráfico de CECOS (Bar)
+            const ctxCecos = document.getElementById('chartCecos').getContext('2d');
+            new Chart(ctxCecos, {
+                type: 'bar',
+                data: {
+                    labels: cecosLabels,
+                    datasets: [{
+                        label: 'Cantidad por CECOS',
+                        data: cecosData,
+                        backgroundColor: 'rgba(33, 150, 243, 0.7)',
+                        borderColor: '#2196F3',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        // Función de procesar guía simulada
+        function processGuia(guiaId) {
+            alert(`Procesando guía ${guiaId} manualmente (simulado)...`);
+        }
+
+        // Evento para seleccionar todo
+        document.getElementById('select-all').addEventListener('change', (e) => {
+            const checkboxes = document.querySelectorAll('.row-checkbox');
+            checkboxes.forEach(checkbox => checkbox.checked = e.target.checked);
+        });
+
+        // Evento para procesar todo
+        document.querySelector('.process-all-btn').addEventListener('click', () => {
+            const selected = Array.from(document.querySelectorAll('.row-checkbox:checked')).length;
+            alert(`Procesando ${selected} guías seleccionadas (simulado)...`);
+        });
+
+        // Eventos para filtros
+        const filterInputs = ['filter-guia', 'filter-cecos', 'filter-agrupador', 'filter-regla', 'filter-faltante'];
+        filterInputs.forEach(id => {
+            document.getElementById(id)?.addEventListener('input', () => renderTable());
+        });
+
+        // Función para actualizar todo
+        function updateAll() {
+            renderTable();
+            renderKPIs();
+            renderCharts();
+        }
+
+        // Inicialización
+        window.onload = () => {
+            const user = localStorage.getItem('user');
+            const profile = localStorage.getItem('profile');
+            if (!user || !profile) {
+                window.location.href = 'index.html';
+            }
+            generateInitialGuias();
+            updateAll();
+        };
+    </script>
+</body>
+</html>
+

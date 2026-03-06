@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Centros de Costo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Librería Chart.js requerida para los gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Variables de marca referenciales y estilos generales */
+        :root {
+            --brand-red: #d20000;
+            --brand-dark: #333333;
+            --bg-color: #f4f7f6;
+            --border-color: #e0e0e0;
+            --active-bg: #ffebeb;
+        }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; padding: 0; 
+            background-color: var(--bg-color); 
+            color: var(--brand-dark); 
+        }
+        
+        /* Cabecera */
+        header { 
+            background-color: var(--brand-red); 
+            color: white; 
+            padding: 15px 30px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .nav-links a { color: white; text-decoration: none; margin-left: 20px; font-size: 0.9em; }
+        
+        .container { padding: 30px; max-width: 1200px; margin: auto; }
+        h2 { border-bottom: 3px solid var(--brand-red); padding-bottom: 10px; margin-top: 0; }
+        
+        /* Cuadrícula de KPIs Interactivos */
+        .kpi-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+            gap: 20px; 
+            margin-bottom: 25px; 
+        }
+        
+        /* Estilos de las Tarjetas */
+        .kpi-card { 
+            background: white; padding: 20px; border-radius: 8px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .kpi-card:hover { 
+            transform: translateY(-5px); 
+            border-color: var(--brand-red);
+            box-shadow: 0 6px 12px rgba(210,0,0,0.15);
+        }
+
+        .kpi-card h3 { margin: 0 0 10px 0; font-size: 0.85em; color: #666; text-transform: uppercase;}
+        .kpi-card .value { font-size: 2em; font-weight: bold; color: var(--brand-dark); }
+
+        /* Cuadrícula de Gráficos */
+        .charts-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+            gap: 20px; 
+            margin-bottom: 25px; 
+        }
+
+        /* Área de Gráfico */
+        .chart-section {
+            background: white; padding: 25px; border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+            border: 1px solid var(--border-color);
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .chart-container { position: relative; height: 300px; width: 100%; }
+        
+        /* Alertas y Tabla */
+        .grid-2-cols { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+        @media (max-width: 800px) { .grid-2-cols { grid-template-columns: 1fr; } }
+        
+        .panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid var(--border-color); }
+        .panel-title { margin-top: 0; font-size: 1.1em; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;}
+        
+        .alert-item { background: #fffafa; padding: 12px; border-left: 4px solid var(--brand-red); margin-bottom: 12px; border-radius: 4px; border: 1px solid #ffebeb; border-left-width: 4px; font-size: 0.9em;}
+        .btn { background-color: var(--brand-red); color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; margin-top: 8px; font-weight: bold;}
+        
+        table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        th, td { border-bottom: 1px solid var(--border-color); padding: 10px; text-align: left; }
+        th { background-color: #f8f9fa; color: #555; }
+
+        /* Form Styles */
+        form { display: flex; flex-direction: column; gap: 10px; }
+        input[type="text"], input[type="file"] { padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; }
+        button[type="submit"] { background-color: var(--brand-red); color: white; border: none; padding: 10px; cursor: pointer; border-radius: 4px; }
+        button[type="submit"]:hover { background-color: #b30000; }
+
+        /* Search Bar */
+        .search-bar { margin-bottom: 20px; }
+        .search-bar input { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; }
+
+        /* Note */
+        .note { font-style: italic; color: #6c757d; margin-bottom: 20px; font-size: 0.9em; }
+
+        /* Action Buttons */
+        .action-btn { background-color: var(--brand-red); color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; margin-right: 5px; }
+        .action-btn:hover { background-color: #b30000; }
+
+        .page-description {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div style="font-size: 1.2em; font-weight: bold;">Gestión de Centros de Costo</div>
+        <div class="nav-links"><a href="#">Mapa de Aplicaciones</a> <a href="contabilizacion.html">Volver</a></div>
+    </header>
+
+    <div class="container">
+        <h2>Visión General de CECOS</h2>
+
+        <!-- Sección añadida para mostrar la descripción visible en la página -->
+        <section class="page-description">
+            <h2>Descripción de la Página</h2>
+            <p>Esta página permite la gestión integral de los Centros de Costo (CECOS) centralizados en el sistema Aramark. Ofrece una visión general mediante KPIs clave (total de CECOS, operacionales, administrativos y grupos únicos), gráficos de distribución por atributos y agrupadores, herramientas para crear nuevos CECOS individualmente o cargar masivamente vía archivos Excel, una barra de búsqueda para filtrar registros, y opciones para editar o auditar entradas existentes en una tabla interactiva. Esta funcionalidad asegura un control eficiente y actualizado de los centros de costo asociados a contratos y operaciones.</p>
+        </section>
+
+        <!-- Fila 1: KPIs -->
+        <div class="kpi-grid">
+            <div class="kpi-card" id="card-total">
+                <h3>Total CECOS</h3>
+                <div class="value">0</div>
+            </div>
+            <div class="kpi-card" id="card-operacional">
+                <h3>Operacionales</h3>
+                <div class="value">0</div>
+            </div>
+            <div class="kpi-card" id="card-administrativo">
+                <h3>Administrativos</h3>
+                <div class="value">0</div>
+            </div>
+            <div class="kpi-card" id="card-grupos">
+                <h3>Grupos Únicos</h3>
+                <div class="value">0</div>
+            </div>
+        </div>
+
+        <!-- Fila 2: Gráficos -->
+        <div class="charts-grid">
+            <div class="chart-section">
+                <h3 style="margin-top: 0; color: #d20000;">Distribución por Atributos</h3>
+                <div class="chart-container">
+                    <canvas id="chartAtributos"></canvas>
+                </div>
+            </div>
+            <div class="chart-section">
+                <h3 style="margin-top: 0; color: #d20000;">Distribución por Agrupadores</h3>
+                <div class="chart-container">
+                    <canvas id="chartAgrupadores"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fila 3: Formularios y Tabla -->
+        <div class="grid-2-cols">
+            <div class="panel">
+                <h3 class="panel-title">Crear Nuevo CECOS</h3>
+                <form id="create-form">
+                    <input type="text" id="codigo" placeholder="Código" required>
+                    <input type="text" id="descripcion" placeholder="Descripción" required>
+                    <input type="text" id="atributos" placeholder="Atributos (e.g., Operacional)" required>
+                    <input type="text" id="agrupadores" placeholder="Agrupadores (e.g., Grupo A)" required>
+                    <button type="submit">Crear</button>
+                </form>
+            </div>
+
+            <div class="panel">
+                <h3 class="panel-title">Subir Excel de CECOS</h3>
+                <input type="file" id="excel-upload" accept=".xlsx, .xls">
+            </div>
+        </div>
+
+        <p class="note">Esta sección simula la gestión de centros de costo con búsqueda, edición y auditoría. Datos de muestra.</p>
+
+        <div class="search-bar">
+            <input type="text" id="search-input" placeholder="Buscar por código o descripción...">
+        </div>
+
+        <div class="panel" style="overflow-x: auto;">
+            <h3 class="panel-title">Lista de CECOS</h3>
+            <table id="centros-table">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Descripción</th>
+                        <th>Atributos</th>
+                        <th>Agrupadores</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <footer>
+        Prototipo Completo para Sistema Aramark © 2026
+    </footer>
+
+    <!-- Script de Gestión y Gráficos -->
+    <script>
+        // Configuración inicial de Chart.js
+        Chart.defaults.font.family = "'Segoe UI', sans-serif";
+
+        // Datos iniciales de CECOS
+        let cecos = [
+            { codigo: '55016', descripcion: 'BOD CLINICA ALEMANA ASEO', atributos: 'Operacional', agrupadores: 'Grupo A' },
+            { codigo: '41640', descripcion: 'BOD. CLIN DAVILA ASEO EDIF G,I VESTIDORE', atributos: 'Administrativo', agrupadores: 'Grupo B' },
+            { codigo: '30227', descripcion: 'BOD. CAMPAMENTO 5400 ESCONDIDA FOOD', atributos: 'Operacional', agrupadores: 'Grupo C' },
+            { codigo: '30296', descripcion: 'BODEGA C. INDISA', atributos: 'Operacional', agrupadores: 'Grupo A' },
+            { codigo: '32164', descripcion: 'BOD.CAMPAMENTO ARAUCO LA COLCHA', atributos: 'Administrativo', agrupadores: 'Grupo B' },
+            { codigo: '32161', descripcion: 'BOD.CAMPAMENTO ARAUCO MARIA LAS CRUCES', atributos: 'Operacional', agrupadores: 'Grupo C' },
+            { codigo: '32166', descripcion: 'BOD.CAMPAMENTO ARAUCO LA CHINITA', atributos: 'Operacional', agrupadores: 'Grupo A' },
+            { codigo: '32163', descripcion: 'BOD.CAMPAMENTO ARAUCO COLCURA', atributos: 'Administrativo', agrupadores: 'Grupo B' }
+        ];
+
+        // Función para renderizar la tabla
+        function renderTable(filter = '') {
+            const tbody = document.querySelector('#centros-table tbody');
+            tbody.innerHTML = '';
+            const filteredCecos = cecos.filter(ceco => 
+                ceco.codigo.toLowerCase().includes(filter.toLowerCase()) || 
+                ceco.descripcion.toLowerCase().includes(filter.toLowerCase())
+            );
+            filteredCecos.forEach(ceco => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${ceco.codigo}</td>
+                    <td>${ceco.descripcion}</td>
+                    <td>${ceco.atributos}</td>
+                    <td>${ceco.agrupadores}</td>
+                    <td>
+                        <button class="action-btn" onclick="editCeco('${ceco.codigo}')">Editar</button>
+                        <button class="action-btn" onclick="auditCeco('${ceco.codigo}')">Auditoría</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Función para renderizar KPIs
+        function renderKPIs() {
+            const total = cecos.length;
+            const operacional = cecos.filter(c => c.atributos === 'Operacional').length;
+            const administrativo = cecos.filter(c => c.atributos === 'Administrativo').length;
+            const grupos = new Set(cecos.map(c => c.agrupadores)).size;
+
+            document.querySelector('#card-total .value').textContent = total;
+            document.querySelector('#card-operacional .value').textContent = operacional;
+            document.querySelector('#card-administrativo .value').textContent = administrativo;
+            document.querySelector('#card-grupos .value').textContent = grupos;
+        }
+
+        // Función para renderizar gráficos
+        function renderCharts() {
+            // Datos para atributos
+            const attrCounts = cecos.reduce((acc, c) => {
+                acc[c.atributos] = (acc[c.atributos] || 0) + 1;
+                return acc;
+            }, {});
+            const attrLabels = Object.keys(attrCounts);
+            const attrData = Object.values(attrCounts);
+
+            // Datos para agrupadores
+            const agrupCounts = cecos.reduce((acc, c) => {
+                acc[c.agrupadores] = (acc[c.agrupadores] || 0) + 1;
+                return acc;
+            }, {});
+            const agrupLabels = Object.keys(agrupCounts);
+            const agrupData = Object.values(agrupCounts);
+
+            // Gráfico de Atributos (Pie)
+            const ctxAttr = document.getElementById('chartAtributos').getContext('2d');
+            new Chart(ctxAttr, {
+                type: 'pie',
+                data: {
+                    labels: attrLabels,
+                    datasets: [{
+                        data: attrData,
+                        backgroundColor: ['#28a745', '#d20000', '#FFC107'],
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: true } }
+                }
+            });
+
+            // Gráfico de Agrupadores (Bar)
+            const ctxAgrup = document.getElementById('chartAgrupadores').getContext('2d');
+            new Chart(ctxAgrup, {
+                type: 'bar',
+                data: {
+                    labels: agrupLabels,
+                    datasets: [{
+                        label: 'Cantidad por Agrupador',
+                        data: agrupData,
+                        backgroundColor: 'rgba(33, 150, 243, 0.7)',
+                        borderColor: '#2196F3',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        // Función de edición simulada
+        function editCeco(codigo) {
+            alert(`Editando CECOS ${codigo} (simulado)...`);
+        }
+
+        // Función de auditoría simulada
+        function auditCeco(codigo) {
+            alert(`Auditoría para CECOS ${codigo}: Modificado por usuario X en 2026-02-26 (simulado)`);
+        }
+
+        // Evento para búsqueda
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            renderTable(e.target.value);
+        });
+
+        // Evento para crear CECOS
+        document.getElementById('create-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newCeco = {
+                codigo: document.getElementById('codigo').value,
+                descripcion: document.getElementById('descripcion').value,
+                atributos: document.getElementById('atributos').value,
+                agrupadores: document.getElementById('agrupadores').value
+            };
+            cecos.push(newCeco);
+            updateAll();
+            e.target.reset();
+            alert('CECOS creado (simulado)');
+        });
+
+        // Evento para subir Excel
+        document.getElementById('excel-upload').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const sheet = workbook.Sheets[sheetName];
+                    const json = XLSX.utils.sheet_to_json(sheet, { header: ['codigo', 'descripcion', 'atributos', 'agrupadores'], range: 1 });
+                    cecos = [...cecos, ...json];
+                    updateAll();
+                    alert('Excel subido y CECOS agregados (simulado)');
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        });
+
+        // Función para actualizar todo
+        function updateAll() {
+            renderTable(document.getElementById('search-input').value);
+            renderKPIs();
+            renderCharts();
+        }
+
+        // Inicialización
+        window.onload = () => {
+            const user = localStorage.getItem('user');
+            const profile = localStorage.getItem('profile');
+            if (!user || !profile) {
+                window.location.href = 'index.html';
+            }
+            updateAll();
+        };
+    </script>
+</body>
+</html>
+

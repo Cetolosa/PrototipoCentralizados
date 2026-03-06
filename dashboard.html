@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Dinámico</title>
+    <!-- Librería Chart.js requerida para los gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Variables de marca referenciales y estilos generales */
+        :root {
+            --brand-red: #d20000;
+            --brand-dark: #333333;
+            --bg-color: #f4f7f6;
+            --border-color: #e0e0e0;
+            --active-bg: #ffebeb;
+        }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; padding: 0; 
+            background-color: var(--bg-color); 
+            color: var(--brand-dark); 
+        }
+        
+        /* Cabecera */
+        header { 
+            background-color: var(--brand-red); 
+            color: white; 
+            padding: 15px 30px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .nav-links a { color: white; text-decoration: none; margin-left: 20px; font-size: 0.9em; }
+        
+        .container { padding: 30px; max-width: 1200px; margin: auto; }
+        h2 { border-bottom: 3px solid var(--brand-red); padding-bottom: 10px; margin-top: 0; }
+        
+        /* Cuadrícula de KPIs Interactivos */
+        .kpi-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+            gap: 20px; 
+            margin-bottom: 25px; 
+        }
+        
+        /* Estilos de las Tarjetas */
+        .kpi-card { 
+            background: white; padding: 20px; border-radius: 8px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .kpi-card:hover { 
+            transform: translateY(-5px); 
+            border-color: var(--brand-red);
+            box-shadow: 0 6px 12px rgba(210,0,0,0.15);
+        }
+
+        .kpi-card h3 { margin: 0 0 10px 0; font-size: 0.85em; color: #666; text-transform: uppercase;}
+        .kpi-card .value { font-size: 2em; font-weight: bold; color: var(--brand-dark); }
+
+        /* Cuadrícula de Gráficos */
+        .charts-grid { 
+            display: grid; 
+            grid-template-columns: 2fr 1fr;
+            grid-template-rows: repeat(3, auto);
+            gap: 20px; 
+            margin-bottom: 25px; 
+        }
+
+        .chart-section:nth-child(1) {
+            grid-column: 1;
+            grid-row: 1 / 4;
+        }
+
+        .chart-section:nth-child(2) {
+            grid-column: 2;
+            grid-row: 1;
+        }
+
+        .chart-section:nth-child(3) {
+            grid-column: 2;
+            grid-row: 2;
+        }
+
+        .chart-section:nth-child(4) {
+            grid-column: 2;
+            grid-row: 3;
+        }
+
+        /* Área de Gráfico */
+        .chart-section {
+            background: white; padding: 25px; border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+            border: 1px solid var(--border-color);
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .chart-container { position: relative; height: 150px; width: 100%; }
+        .chart-section:nth-child(1) .chart-container { height: 470px; } /* 150*3 + 20*2 = 470px */
+
+        /* Alertas y Tabla */
+        .grid-2-cols { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+        @media (max-width: 800px) { .grid-2-cols { grid-template-columns: 1fr; } }
+        
+        .panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid var(--border-color); }
+        .panel-title { margin-top: 0; font-size: 1.1em; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;}
+        
+        .alert-item { background: #fffafa; padding: 12px; border-left: 4px solid var(--brand-red); margin-bottom: 12px; border-radius: 4px; border: 1px solid #ffebeb; border-left-width: 4px; font-size: 0.9em;}
+        .btn { background-color: var(--brand-red); color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; margin-top: 8px; font-weight: bold;}
+        
+        table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        th, td { border-bottom: 1px solid var(--border-color); padding: 10px; text-align: left; }
+        th { background-color: #f8f9fa; color: #555; }
+
+        .page-description {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div style="font-size: 1.2em; font-weight: bold;">Dashboard</div>
+        <div class="nav-links"><a href="#">Mapa de Aplicaciones</a> <a href="contabilizacion.html">Volver</a></div>
+    </header>
+
+    <div class="container">
+        <h2>Visión General con Gráficos</h2>
+        
+        <!-- Sección añadida para mostrar la descripción visible en la página -->
+        <section class="page-description">
+            <h2>Descripción de la Página</h2>
+            <p>El dashboard permite monitorear en tiempo real el proceso de contabilización automática de las entradas de mercancía asociadas a los contratos. Proporciona visibilidad sobre el estado de ejecución de los BOTs, las reglas de negocio aplicadas y los resultados de cada transacción, facilitando la detección de incidencias, validaciones pendientes o anomalías en el flujo de contabilización.</p>
+        </section>
+
+        <!-- Fila 1: KPIs -->
+        <div class="kpi-grid">
+            <div class="kpi-card" id="card-procesadas">
+                <h3>Guías Procesadas Hoy</h3>
+                <div class="value">400</div>
+            </div>
+            <div class="kpi-card" id="card-excepciones">
+                <h3>Excepciones Activas</h3>
+                <div class="value">15</div>
+            </div>
+            <div class="kpi-card" id="card-eficiencia">
+                <h3>Eficiencia BOT</h3>
+                <div class="value">98.5%</div>
+            </div>
+            <div class="kpi-card" id="card-tiempo">
+                <h3>Tiempo Promedio</h3>
+                <div class="value">1.2s</div>
+            </div>
+        </div>
+
+        <!-- Fila 2: Gráficos Visibles -->
+        <div class="charts-grid">
+            <div class="chart-section">
+                <h3 style="margin-top: 0; color: #d20000;">Volumen de Guías Procesadas (Últimos 7 días)</h3>
+                <div class="chart-container">
+                    <canvas id="chartProcesadas"></canvas>
+                </div>
+            </div>
+            <div class="chart-section">
+                <h3 style="margin-top: 0; color: #d20000;">Evolución de Excepciones Activas (Últimos 7 días)</h3>
+                <div class="chart-container">
+                    <canvas id="chartExcepciones"></canvas>
+                </div>
+            </div>
+            <div class="chart-section">
+                <h3 style="margin-top: 0; color: #d20000;">Eficiencia de Procesamiento vs Errores (Hoy)</h3>
+                <div class="chart-container">
+                    <canvas id="chartEficiencia"></canvas>
+                </div>
+            </div>
+            <div class="chart-section">
+                <h3 style="margin-top: 0; color: #d20000;">Tiempo Promedio de Procesamiento por Guía (Segundos)</h3>
+                <div class="chart-container">
+                    <canvas id="chartTiempo"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fila 3: Alertas y Tabla -->
+        <div class="grid-2-cols">
+            <div class="panel">
+                <h3 class="panel-title">Excepciones Prioritarias</h3>
+                <div class="alert-item">
+                    <strong>Guía #1234</strong><br>Estado de inventario bloqueado.
+                    <br><button class="btn">Resolver</button>
+                </div>
+                <div class="alert-item">
+                    <strong>Guía #5678</strong><br>Datos incompletos detectados.
+                    <br><button class="btn">Resolver</button>
+                </div>
+            </div>
+
+            <div class="panel" style="overflow-x: auto;">
+                <h3 class="panel-title">Guías Recientes (Muestra)</h3>
+                <table>
+                    <thead>
+                        <tr><th>Guía ID</th><th>CECOS</th><th>Estado</th><th>Timestamp</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>001</td><td>55016 - BOD CLINICA ALEMANA</td><td style="color: green; font-weight: bold;">A (Activo)</td><td>2026-02-26 10:00</td></tr>
+                        <tr><td>002</td><td>41640 - BOD. CLIN DAVILA</td><td style="color: #d20000; font-weight: bold;">E (Excepción)</td><td>2026-02-26 11:15</td></tr>
+                        <tr><td>003</td><td>30227 - ESCONDIDA FOOD</td><td style="color: green; font-weight: bold;">A (Activo)</td><td>2026-02-26 12:00</td></tr>
+                        <tr><td>005</td><td>32164 - ARAUCO LA COLCHA</td><td style="color: #d20000; font-weight: bold;">E (Excepción)</td><td>2026-02-26 13:00</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script de Gráficos -->
+    <script>
+        // Configuración inicial de Chart.js
+        Chart.defaults.font.family = "'Segoe UI', sans-serif";
+
+        // Arreglos de datos reales incrustados
+        const chartData = {
+            'procesadas': {
+                title: 'Volumen de Guías Procesadas (Últimos 7 días)',
+                type: 'bar',
+                labels: ['Día 1', 'Día 2', 'Día 3', 'Día 4', 'Día 5', 'Ayer', 'Hoy'],
+                data: [250, 300, 320, 350, 380, 420, 400], 
+                bgColor: 'rgba(33, 150, 243, 0.7)',
+                borderColor: '#2196F3'
+            },
+            'excepciones': {
+                title: 'Evolución de Excepciones Activas (Últimos 7 días)',
+                type: 'line',
+                labels: ['Día 1', 'Día 2', 'Día 3', 'Día 4', 'Día 5', 'Ayer', 'Hoy'],
+                data: [3, 4, 5, 6, 7, 8, 15], 
+                bgColor: 'rgba(210, 0, 0, 0.2)',
+                borderColor: '#d20000'
+            },
+            'eficiencia': {
+                title: 'Eficiencia de Procesamiento vs Errores (Hoy)',
+                type: 'doughnut',
+                labels: ['Procesado Exitoso (%)', 'Excepciones (%)'],
+                data: [98.5, 1.5], 
+                bgColor: ['#28a745', '#d20000'],
+                borderColor: ['#fff', '#fff']
+            },
+            'tiempo': {
+                title: 'Tiempo Promedio de Procesamiento por Guía (Segundos)',
+                type: 'line',
+                labels: ['08:00', '10:00', '12:00', '14:00', '16:00', '18:00', 'Actual'],
+                data: [1.1, 1.3, 1.5, 1.2, 1.4, 1.1, 1.2], 
+                bgColor: 'rgba(255, 193, 7, 0.2)',
+                borderColor: '#FFC107'
+            }
+        };
+
+        function createChart(metricId, canvasId) {
+            const dataConfig = chartData[metricId];
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            return new Chart(ctx, {
+                type: dataConfig.type,
+                data: {
+                    labels: dataConfig.labels,
+                    datasets: [{
+                        label: dataConfig.title,
+                        data: dataConfig.data,
+                        backgroundColor: dataConfig.bgColor,
+                        borderColor: dataConfig.borderColor,
+                        borderWidth: 2,
+                        fill: dataConfig.type === 'line', 
+                        tension: 0.3 
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: dataConfig.type === 'doughnut' } },
+                    scales: dataConfig.type !== 'doughnut' ? { y: { beginAtZero: true } } : {}
+                }
+            });
+        }
+
+        // Cargar todos los gráficos al inicio
+        window.onload = () => {
+            createChart('procesadas', 'chartProcesadas');
+            createChart('excepciones', 'chartExcepciones');
+            createChart('eficiencia', 'chartEficiencia');
+            createChart('tiempo', 'chartTiempo');
+        };
+    </script>
+</body>
+</html>

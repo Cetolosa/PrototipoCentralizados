@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Monitoreo Operativo del Bot de Contabilización</title>
+    <!-- CDN para Font Awesome (para iconos) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Todo el CSS original intacto */
+        :root {
+            --brand-red: #d20000;
+            --brand-dark: #333333;
+            --bg-color: #f4f7f6;
+            --border-color: #e0e0e0;
+            --active-bg: #ffebeb;
+        }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; padding: 0; 
+            background-color: var(--bg-color); 
+            color: var(--brand-dark); 
+            font-size: 14px;
+        }
+
+        /* Cabecera */
+        header { 
+            background-color: var(--brand-red); 
+            color: white; 
+            padding: 15px 30px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+        .header-left img {
+            height: 40px;
+            margin-right: 10px;
+        }
+        .nav-links a { color: white; text-decoration: none; margin-left: 20px; font-size: 0.9em; }
+
+        .container { padding: 30px; max-width: none; margin: auto; margin-top: 100px; } /* Full page adjustment */
+        h2 { border-bottom: 3px solid var(--brand-red); padding-bottom: 10px; margin-top: 0; }
+
+        /* Note */
+        .note { font-style: italic; color: #6c757d; margin-bottom: 20px; font-size: 0.9em; padding: 5px; background-color: #f8f9fa; border-radius: 4px; }
+
+        /* Additional styles from original, adapted */
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .metric-card {
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .metric-card h3 {
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #007bff;
+        }
+        .metric-card p {
+            font-size: 24px;
+            margin: 0;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            font-size: 14px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+        }
+        th:hover {
+            background-color: #0056b3;
+        }
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        tr.clickable {
+            cursor: pointer;
+        }
+        tr.clickable:hover {
+            background-color: #e2e6ea;
+        }
+        .alert {
+            background-color: #dc3545;
+            color: #fff;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .alert button {
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+        }
+        .export-btn {
+            margin-bottom: 10px;
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+        }
+        .export-btn:hover {
+            background-color: #0056b3;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        .volver-btn {
+            background-color: #6c757d;
+            color: #fff;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: inline-block;
+        }
+        .volver-btn:hover {
+            background-color: #5a6268;
+        }
+        .document-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            white-space: pre-wrap;
+            font-size: 12px;
+            overflow: auto;
+            max-height: 600px;
+        }
+        .btn-red {
+            background-color: #dc3545;
+            color: #fff;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-blue {
+            background-color: #007bff;
+            color: #fff;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-gray {
+            background-color: #6c757d;
+            color: #fff;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-blue:hover {
+            background-color: #0056b3;
+        }
+        .btn-red:hover {
+            background-color: #c82333;
+        }
+        .btn-gray:hover {
+            background-color: #5a6268;
+        }
+
+        /* New styles for side-by-side panels in valores-objetivo */
+        .objetivo-panels {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .objetivo-panel {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            flex: 1;
+        }
+        .objetivo-panel h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        .objetivo-panel label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        .objetivo-panel input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .objetivo-panel button {
+            background-color: var(--brand-red);
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+        .objetivo-panel button:hover {
+            background-color: #c82333;
+        }
+        .objetivo-panel .file-input {
+            border: 1px solid #ddd;
+            padding: 8px;
+            border-radius: 4px;
+            display: inline-block;
+            cursor: pointer;
+        }
+        .objetivo-panel .file-input input {
+            display: none;
+        }
+        .objetivo-panel .file-input span {
+            color: #6c757d;
+        }
+
+        footer {
+            text-align: center;
+            padding: 15px;
+            background-color: #fff;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+            font-size: 12px;
+            color: #6c757d;
+        }
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .kpi-card {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s, border 0.2s;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            border: 2px solid var(--brand-red);
+        }
+
+        .kpi-card h3 {
+            font-size: 1em;
+            margin-bottom: 10px;
+            color: var(--brand-dark);
+        }
+
+        .kpi-card p {
+            font-size: 2em;
+            margin: 0;
+            font-weight: bold;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .grid-2-cols {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        form, .upload-panel {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        input[type="text"], input[type="date"], input[type="file"], select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: var(--brand-red);
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #c82333;
+        }
+
+        .search-bar {
+            margin-bottom: 20px;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        #process-all-flag {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        #process-all-flag button {
+            width: auto;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        #pendientes table {
+            width: 100%;
+            border-collapse: collapse;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #pendientes th, #pendientes td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        #pendientes th {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+
+        #pendientes th input {
+            margin-top: 5px;
+            border: none;
+            padding: 5px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        #pendientes tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        #pendientes td button {
+            background-color: #007bff;
+            width: auto;
+        }
+
+        #pendientes td button:hover {
+            background-color: #0056b3;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px 15px;
+            }
+        }
+
+        .page-description {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .chart-section {
+            background: white; padding: 25px; border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+            border: 1px solid var(--border-color);
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .chart-container { position: relative; height: 240px; width: 100%; } /* Ajustado a 240px para un tamaño equilibrado */
+
+        /* Estilos para selector de rango de fechas */
+        .date-range-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .date-range-selector label {
+            font-size: 14px;
+        }
+        .date-range-selector input[type="date"], .date-range-selector input[type="text"], .date-range-selector select {
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            flex: 1;
+            min-width: 150px;
+        }
+        .date-range-selector button {
+            background-color: #007bff;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: auto;
+        }
+        .date-range-selector button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Ajustes para tooltips */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 220px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -110px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Ajustes para iconos */
+        .icon {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-left">
+        <div style="font-size: 1.2em; font-weight: bold;">Dashboard de Monitoreo Operativo del Bot de Contabilización</div>
+    </div>
+    <div class="nav-links"><a href="#">Volver al Inicio</a> <a href="#">Mapa de Aplicaciones</a></div>
+</header>
+
+<div class="container" id="inner-main-content">
+    <div class="header">
+        <h2>Dashboard de Operación Diaria y Control de Riesgos</h2>
+    </div>
+
+    <!-- Sección de descripción -->
+    <section class="page-description">
+        <h2>Descripción del Dashboard</h2>
+        <p>Este dashboard proporciona una vista centrada en la operación diaria y control de riesgos para el bot de contabilización. Incluye KPIs de alto nivel, distribución y tendencias en gráficos, y listas operativas para acciones directas. Los filtros permiten adaptar la vista a necesidades específicas.</p>
+    </section>
+
+    <!-- Filtros -->
+    <div class="date-range-selector">
+        <label for="fechaInicio"><i class="fas fa-calendar-alt icon"></i> Fecha Inicio:</label>
+        <input type="date" id="fechaInicio">
+        <label for="fechaFin"><i class="fas fa-calendar-check icon"></i> Fecha Fin:</label>
+        <input type="date" id="fechaFin">
+        <label for="contrato"><i class="fas fa-file-contract icon"></i> Contrato/CECO:</label>
+        <input type="text" id="contrato" placeholder="Ej: Contrato XYZ">
+        <label for="estado"><i class="fas fa-filter icon"></i> Estado:</label>
+        <select id="estado">
+            <option>Todos</option>
+            <option>Creada</option>
+            <option>Pendiente</option>
+            <option>Contabilizada</option>
+            <option>Excepción</option>
+            <option>Error</option>
+        </select>
+        <button id="apply-filters"><i class="fas fa-search icon"></i> Aplicar Filtros</button>
+    </div>
+
+    <!-- KPIs de Alto Nivel -->
+    <h2>KPIs de Alto Nivel</h2>
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <h3><i class="fas fa-check-circle icon"></i> Guías Contabilizadas Hoy</h3>
+            <p>150 <small class="text-success">+10% vs. ayer</small></p>
+        </div>
+        <div class="kpi-card">
+            <h3><i class="fas fa-exclamation-triangle icon"></i> Guías en Excepción</h3>
+            <p>25 <small class="text-danger">-5% vs. último corte</small></p>
+        </div>
+        <div class="kpi-card">
+            <h3><i class="fas fa-bug icon"></i> Guías con Error</h3>
+            <p>10 (5% del total)</p>
+        </div>
+        <div class="kpi-card">
+            <h3><i class="fas fa-hourglass-half icon"></i> Backlog Pendiente</h3>
+            <p>200</p>
+        </div>
+    </div>
+
+    <!-- Distribución y Tendencia -->
+    <h2>Distribución y Tendencia</h2>
+    <div class="grid-2-cols">
+        <div class="chart-section">
+            <h3 style="margin-top: 0; color: var(--brand-red);"><i class="fas fa-bars icon"></i> Guías por Estado</h3>
+            <div class="chart-container">
+                <canvas id="barrasEstado"></canvas>
+            </div>
+        </div>
+        <div class="chart-section">
+            <h3 style="margin-top: 0; color: var(--brand-red);"><i class="fas fa-chart-line icon"></i> Guías Contabilizadas por Día</h3>
+            <div class="chart-container">
+                <canvas id="lineaContabilizadas"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="charts-grid">
+        <div class="chart-section">
+            <h3 style="margin-top: 0; color: var(--brand-red);"><i class="fas fa-chart-area icon"></i> Evolución de Errores y Excepciones</h3>
+            <div class="chart-container">
+                <canvas id="lineaErroresExcepciones"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Listas Operativas -->
+    <h2>Listas Operativas</h2>
+    <div class="grid-2-cols" style="grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));">
+        <div>
+            <h3 style="color: var(--brand-red);"><i class="fas fa-exclamation-circle icon"></i> Guías en Excepción (Top Prioridades)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>N° Guía</th>
+                        <th>Contrato/CECO</th>
+                        <th>Motivo</th>
+                        <th>Días</th>
+                        <th>Responsable</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>001</td>
+                        <td>Contrato A</td>
+                        <td>Dato inválido</td>
+                        <td>3</td>
+                        <td>Usuario1</td>
+                    </tr>
+                    <tr>
+                        <td>002</td>
+                        <td>Contrato B</td>
+                        <td>Falta documento</td>
+                        <td>5</td>
+                        <td>Usuario2</td>
+                    </tr>
+                    <!-- Más filas -->
+                </tbody>
+            </table>
+        </div>
+        <div>
+            <h3 style="color: var(--brand-red);"><i class="fas fa-tools icon"></i> Guías con Error Técnico</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Guía</th>
+                        <th>Mensaje Error</th>
+                        <th>Intentos</th>
+                        <th>Detalle</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>003</td>
+                        <td>Error API</td>
+                        <td>2</td>
+                        <td><a href="#" class="btn-blue"><i class="fas fa-file-alt icon"></i> Ver Log</a></td>
+                    </tr>
+                    <tr>
+                        <td>004</td>
+                        <td>Timeout</td>
+                        <td>1</td>
+                        <td><a href="#" class="btn-blue"><i class="fas fa-file-alt icon"></i> Ver Log</a></td>
+                    </tr>
+                    <!-- Más filas -->
+                </tbody>
+            </table>
+        </div>
+        <div>
+            <h3 style="color: var(--brand-red);"><i class="fas fa-history icon"></i> Últimas Guías Contabilizadas</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Guía</th>
+                        <th>Fecha/Hora</th>
+                        <th>Contrato</th>
+                        <th>Monto</th>
+                        <th>Usuario/Bot</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>005</td>
+                        <td>2026-03-05 18:00</td>
+                        <td>Contrato C</td>
+                        <td>$1000</td>
+                        <td>Bot</td>
+                    </tr>
+                    <tr>
+                        <td>006</td>
+                        <td>2026-03-05 17:45</td>
+                        <td>Contrato D</td>
+                        <td>$500</td>
+                        <td>Bot</td>
+                    </tr>
+                    <!-- Más filas -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="note">Nota: El dashboard se actualiza cada hora para monitoreo operativo del bot de contabilización.</div>
+</div>
+
+<footer>
+    Prototipo Completo para Sistema Aramark © 2026
+</footer>
+
+<script>
+    // Inicializar gráficos con colores ajustados
+    window.onload = function() {
+        // Gráfico de barras: Guías por estado
+        const ctxBarras = document.getElementById('barrasEstado').getContext('2d');
+        new Chart(ctxBarras, {
+            type: 'bar',
+            data: {
+                labels: ['Creada', 'Pendiente', 'Contabilizada', 'Excepción', 'Error'],
+                datasets: [{
+                    label: 'Guías',
+                    data: [50, 200, 150, 25, 10],
+                    backgroundColor: ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6c757d']
+                }]
+            },
+            options: { 
+                responsive: true,
+                scales: { y: { beginAtZero: true } } 
+            }
+        });
+
+        // Gráfico de líneas: Guías contabilizadas por día
+        const ctxLineaCont = document.getElementById('lineaContabilizadas').getContext('2d');
+        new Chart(ctxLineaCont, {
+            type: 'line',
+            data: {
+                labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'],
+                datasets: [{
+                    label: 'Contabilizadas',
+                    data: [120, 130, 140, 150, 160],
+                    borderColor: '#007bff',
+                    fill: false
+                }, {
+                    label: 'Meta',
+                    data: [150, 150, 150, 150, 150],
+                    borderColor: '#dc3545',
+                    fill: false
+                }]
+            },
+            options: { 
+                responsive: true,
+                scales: { y: { beginAtZero: true } } 
+            }
+        });
+
+        // Gráfico de líneas: Evolución de errores y excepciones
+        const ctxLineaErr = document.getElementById('lineaErroresExcepciones').getContext('2d');
+        new Chart(ctxLineaErr, {
+            type: 'line',
+            data: {
+                labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'],
+                datasets: [{
+                    label: 'Errores',
+                    data: [15, 12, 10, 8],
+                    borderColor: '#dc3545',
+                    fill: false
+                }, {
+                    label: 'Excepciones',
+                    data: [30, 28, 25, 20],
+                    borderColor: '#ffc107',
+                    fill: false
+                }]
+            },
+            options: { 
+                responsive: true,
+                scales: { y: { beginAtZero: true } } 
+            }
+        });
+    };
+
+    // Funcionalidad básica para filtros (simulada)
+    document.getElementById('apply-filters').addEventListener('click', function() {
+        alert('Filtros aplicados (funcionalidad simulada).');
+    });
+</script>
+
+</body>
+</html>

@@ -1,5 +1,3 @@
-html
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -125,6 +123,23 @@ html
         }
 
         .chart-container { position: relative; height: 300px; max-width: 600px; margin: 0 auto; } /* Centrado y tamaño ajustado */
+
+        /* Status Filter */
+        .status-filter {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+        .status-filter label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
     </style>
 </head>
 <body>
@@ -140,7 +155,7 @@ html
     <!-- Sección añadida para mostrar la descripción visible en la página -->
     <section class="page-description">
         <h2>Descripción de la Página</h2>
-        <p>Esta página gestiona los inventarios APP pendientes en el sistema Aramark. Incluye KPIs como total de inventarios, pendientes, procesando, completados y fallidos; un gráfico de distribución por estados para visión rápida; formularios para registrar nuevos inventarios individualmente o cargar masivamente vía Excel; una tabla interactiva con filtros por columna, búsqueda global, ordenamiento, selección múltiple y acciones para procesar inventarios, con columnas para número, CECO, fecha, estado, fecha de procesamiento, planilla creada y detalle obtenido. Con el CECO y la planilla APP, un BOT convierte a planilla de inventario, lista diferencias y las guarda para análisis posterior en contratos centralizados.</p>
+        <p>Esta página gestiona los inventarios APP pendientes en el sistema Aramark. Incluye KPIs como total de inventarios, pendientes, procesando, completados y fallidos; un gráfico de distribución por estados para visión rápida; formularios para registrar nuevos inventarios individualmente o cargar masivamente vía Excel; una tabla interactiva con filtros por columna, búsqueda global, ordenamiento, selección múltiple, acciones para procesar inventarios, y un filtro para ocultar estados específicos. Las columnas incluyen número, CECO, fecha, estado, fecha de procesamiento, planilla creada, número de inventario (generado cuando la planilla está creada), y detalle obtenido. Con el CECO y la planilla APP, un BOT convierte a planilla de inventario, genera un número de inventario, lista diferencias y las guarda para análisis posterior en contratos centralizados.</p>
     </section>
 
     <p class="note">Con El CECO y la planilla APP el BOT va y convierte a Planilla de inventario, luego lista las diferencias del inventario y las guarda para análisis posterior.</p>
@@ -210,6 +225,13 @@ html
         <input type="date" id="process-date" style="margin-right: 10px;">
         <button class="action-btn" id="auto-process">Proceso Automático</button>
     </div>
+    <div class="status-filter">
+        <h4>Mostrar estados:</h4>
+        <label><input type="checkbox" checked data-status="Pendiente"> Pendiente</label>
+        <label><input type="checkbox" checked data-status="Procesando"> Procesando</label>
+        <label><input type="checkbox" checked data-status="Completado"> Completado</label>
+        <label><input type="checkbox" checked data-status="Fallido"> Fallido</label>
+    </div>
     <table id="inventarios-table">
         <thead>
             <tr>
@@ -220,6 +242,7 @@ html
                 <th data-column="estado">Estado <input type="text" class="filter-input" data-column="estado" placeholder="Filtrar..."></th>
                 <th data-column="fechaProcesamiento">Fecha Procesamiento <input type="text" class="filter-input" data-column="fechaProcesamiento" placeholder="Filtrar..."></th>
                 <th data-column="planillaCreada">Planilla Creada <input type="text" class="filter-input" data-column="planillaCreada" placeholder="Filtrar..."></th>
+                <th data-column="inventarioNumero">Número de Inventario <input type="text" class="filter-input" data-column="inventarioNumero" placeholder="Filtrar..."></th>
                 <th data-column="detalleObtenido">Detalle Obtenido <input type="text" class="filter-input" data-column="detalleObtenido" placeholder="Filtrar..."></th>
                 <th>Acciones</th>
             </tr>
@@ -237,18 +260,28 @@ html
     // Configuración inicial de Chart.js
     Chart.defaults.font.family = "'Segoe UI', sans-serif";
 
-    // Datos iniciales de Inventarios APP (simulados)
-    let inventarios = [
-        { numero: 'APP001', ceco: 'CECO001', fecha: '2026-03-01', estado: 'Pendiente', fechaProcesamiento: '', planillaCreada: false, detalleObtenido: false },
-        { numero: 'APP002', ceco: 'CECO002', fecha: '2026-03-02', estado: 'Procesando', fechaProcesamiento: '2026-03-02', planillaCreada: true, detalleObtenido: false },
-        { numero: 'APP003', ceco: 'CECO003', fecha: '2026-03-03', estado: 'Completado', fechaProcesamiento: '2026-03-03', planillaCreada: true, detalleObtenido: true },
-        { numero: 'APP004', ceco: 'CECO004', fecha: '2026-03-04', estado: 'Fallido', fechaProcesamiento: '2026-03-04', planillaCreada: true, detalleObtenido: false },
-        { numero: 'APP005', ceco: 'CECO005', fecha: '2026-03-05', estado: 'Pendiente', fechaProcesamiento: '', planillaCreada: false, detalleObtenido: false }
-    ];
+    // Datos iniciales de Inventarios APP (simulados, 30 ejemplos)
+    let inventarios = [];
+    const estados = ['Pendiente', 'Procesando', 'Completado', 'Fallido'];
+
+    function generateInitialData() {
+        for (let i = 1; i <= 30; i++) {
+            const numero = 'APP' + i.toString().padStart(3, '0');
+            const ceco = 'CECO' + i.toString().padStart(3, '0');
+            const fecha = `2026-03-${(i % 28 + 1).toString().padStart(2, '0')}`;
+            const estado = estados[Math.floor(Math.random() * estados.length)];
+            const planillaCreada = Math.random() > 0.3; // Mayor probabilidad de true para ejemplos
+            const detalleObtenido = planillaCreada && Math.random() > 0.5;
+            const fechaProcesamiento = (estado !== 'Pendiente') ? `2026-03-${(i % 28 + 1).toString().padStart(2, '0')}` : '';
+            const inventarioNumero = planillaCreada ? 'INV-' + numero : '';
+            inventarios.push({ numero, ceco, fecha, estado, fechaProcesamiento, planillaCreada, inventarioNumero, detalleObtenido });
+        }
+    }
 
     let sortColumn = 'numero';
     let sortDirection = 1; // 1 asc, -1 desc
     let filters = {};
+    let visibleStatuses = new Set(['Pendiente', 'Procesando', 'Completado', 'Fallido']);
 
     // Función para renderizar la tabla
     function renderTable() {
@@ -258,7 +291,9 @@ html
         let filteredInventarios = inventarios.filter(inv => {
             let matches = true;
             Object.keys(filters).forEach(key => {
-                if (filters[key] && !String(inv[key]).toLowerCase().includes(filters[key].toLowerCase())) {
+                let value = inv[key];
+                if (typeof value === 'boolean') value = value ? '✓' : '';
+                if (filters[key] && !String(value).toLowerCase().includes(filters[key].toLowerCase())) {
                     matches = false;
                 }
             });
@@ -267,6 +302,7 @@ html
                                       inv.ceco.toLowerCase().includes(globalFilter) || 
                                       inv.fecha.includes(globalFilter));
             }
+            matches = matches && visibleStatuses.has(inv.estado);
             return matches;
         });
         filteredInventarios.sort((a, b) => {
@@ -288,6 +324,7 @@ html
                 <td>${inv.estado}</td>
                 <td>${inv.fechaProcesamiento || ''}</td>
                 <td>${inv.planillaCreada ? '✓' : ''}</td>
+                <td>${inv.inventarioNumero || ''}</td>
                 <td>${inv.detalleObtenido ? '✓' : ''}</td>
                 <td>
                     <button class="action-btn" onclick="updateEstado('${inv.numero}', 'Procesando')">Procesar</button>
@@ -354,6 +391,7 @@ html
             // Simular procesamiento del bot
             setTimeout(() => {
                 inv.planillaCreada = true;
+                inv.inventarioNumero = 'INV-' + inv.numero; // Agregar número de inventario cuando planilla creada
                 if (Math.random() > 0.2) {
                     inv.estado = 'Completado';
                     inv.detalleObtenido = true;
@@ -381,6 +419,7 @@ html
             estado: 'Pendiente',
             fechaProcesamiento: '',
             planillaCreada: false,
+            inventarioNumero: '',
             detalleObtenido: false
         };
         inventarios.push(newInv);
@@ -400,7 +439,7 @@ html
                 const sheetName = workbook.SheetNames[0];
                 const sheet = workbook.Sheets[sheetName];
                 const json = XLSX.utils.sheet_to_json(sheet, { header: ['numero', 'ceco', 'fecha'], range: 1 });
-                const newInventarios = json.map(item => ({ ...item, estado: 'Pendiente', fechaProcesamiento: '', planillaCreada: false, detalleObtenido: false }));
+                const newInventarios = json.map(item => ({ ...item, estado: 'Pendiente', fechaProcesamiento: '', planillaCreada: false, inventarioNumero: '', detalleObtenido: false }));
                 inventarios = [...inventarios, ...newInventarios];
                 updateAll();
                 alert('Excel subido e inventarios agregados (simulados). El bot procesará automáticamente.');
@@ -461,6 +500,17 @@ html
         });
     });
 
+    // Eventos para filtro de estados (ocultar/mostrar)
+    document.querySelectorAll('.status-filter input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            visibleStatuses = new Set();
+            document.querySelectorAll('.status-filter input[type="checkbox"]:checked').forEach(cb => {
+                visibleStatuses.add(cb.getAttribute('data-status'));
+            });
+            renderTable();
+        });
+    });
+
     // Función para actualizar todo
     function updateAll() {
         renderTable();
@@ -470,8 +520,8 @@ html
 
     // Inicialización
     window.onload = () => {
+        generateInitialData();
         updateAll();
     };
 </script></body>
 </html>
-

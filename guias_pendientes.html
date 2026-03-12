@@ -192,6 +192,7 @@
                     <tr>
                         <th><input type="checkbox" disabled></th>
                         <th class="sortable" onclick="sortTable('guiaId')">Guía ID</th>
+                        <th class="sortable" onclick="sortTable('fechaSalida')">Fecha Salida CD</th>
                         <th class="sortable" onclick="sortTable('cecos')">CECOS</th>
                         <th class="sortable" onclick="sortTable('agrupador')">Agrupador</th>
                         <th class="sortable" onclick="sortTable('regla')">Regla</th>
@@ -236,6 +237,7 @@
 
         // Generar datos iniciales
         function generateInitialGuias() {
+            const currentDate = new Date(2026, 2, 11, 21, 12, 0);
             let guiaIdCounter = 1;
             cecosList.forEach(ceco => {
                 const count = Math.floor(Math.random() * 7) + 6; // Random between 6 and 12
@@ -243,17 +245,47 @@
                     const guiaId = guiaIdCounter.toString().padStart(3, '0');
                     const agrupador = agrupadorMap.get(ceco) || 'Desconocido';
                     const regla = reglas[Math.floor(Math.random() * reglas.length)];
+
+                    // Inventar fecha de salida (días 1-10 de marzo 2026, hora random)
+                    const salidaDay = Math.floor(Math.random() * 10) + 1;
+                    const salidaHour = Math.floor(Math.random() * 24);
+                    const salidaMinute = Math.floor(Math.random() * 60);
+                    const salidaDate = new Date(2026, 2, salidaDay, salidaHour, salidaMinute, 0);
+                    const fechaSalida = `2026-03-${salidaDay.toString().padStart(2, '0')}`;
+
+                    const msPassed = currentDate - salidaDate;
+                    const hoursPassed = msPassed / (1000 * 3600);
+
                     let faltante = '';
+                    let met = false;
+
                     if (regla === 'Inmediato') {
                         faltante = 'N/A';
+                        met = true; // Siempre pueden procesarse
                     } else if (regla === '48 horas') {
-                        const horas = Math.floor(Math.random() * 48) + 1;
-                        faltante = `${horas} horas restantes`;
+                        if (hoursPassed > 48) {
+                            faltante = `Pasadas ${Math.floor(hoursPassed)} horas`;
+                            met = true; // Pueden procesarse si más de 48 horas
+                        } else {
+                            const remaining = 48 - hoursPassed;
+                            faltante = `Faltan ${Math.floor(remaining)} horas`;
+                            met = false;
+                        }
                     } else if (regla === 'Excepción') {
-                        const day = Math.floor(Math.random() * 30) + 1;
-                        faltante = `Hasta 2026-03-${day.toString().padStart(2, '0')}`;
+                        const untilDay = Math.floor(Math.random() * 20) + 12; // 12-31 marzo
+                        const untilDate = new Date(2026, 2, untilDay, 23, 59, 59);
+                        if (currentDate < untilDate) {
+                            faltante = `Hasta 2026-03-${untilDay.toString().padStart(2, '0')}`;
+                            met = true;
+                        } else {
+                            faltante = 'Vencido';
+                            met = false;
+                        }
                     }
-                    guias.push({ guiaId, cecos: ceco, agrupador, regla, faltante, estado: 'Pendiente' });
+
+                    const estado = met ? 'Pendiente' : 'Excepción';
+
+                    guias.push({ guiaId, fechaSalida, cecos: ceco, agrupador, regla, faltante, estado });
                     guiaIdCounter++;
                 }
             });
@@ -300,6 +332,7 @@
                 tr.innerHTML = `
                     <td><input type="checkbox" class="row-checkbox"></td>
                     <td>${g.guiaId}</td>
+                    <td>${g.fechaSalida}</td>
                     <td>${g.cecos}</td>
                     <td>${g.agrupador}</td>
                     <td>${g.regla}</td>
@@ -395,4 +428,3 @@
     </script>
 </body>
 </html>
-

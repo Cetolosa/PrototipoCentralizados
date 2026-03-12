@@ -148,6 +148,12 @@
             transform: scale(1.05) translateY(-3px); /* Escala y elevación para "onda" */
             box-shadow: 0 4px 10px rgba(210,0,0,0.3); /* Sombra más intensa */
         }
+        .inner-nav a.red-btn {
+            background: linear-gradient(to right, var(--brand-red), #c82333);
+        }
+        .inner-nav a.red-btn:hover {
+            background: linear-gradient(to right, #c82333, #b30000);
+        }
         .inner-nav i { /* Iconos */
             margin-right: 8px;
             font-size: 18px;
@@ -560,12 +566,12 @@
 
 <nav class="inner-nav" id="inner-nav">
     <ul>
-        <li><a href="procesamiento.html"><i class="fas fa-cogs"></i> Procesamiento Masivo</a></li>
-        <li><a href="detalle.html"><i class="fas fa-table"></i> Detalle de Registros</a></li>
-        <li><a href="valores-objetivo.html"><i class="fas fa-bullseye"></i> Valores Objetivo</a></li>
-        <li><a href="monitoreo-registro.html"><i class="fas fa-history"></i> Monitoreo</a></li>
-        <li><a href="reportes.html"><i class="fas fa-download"></i> Reportes y Descargas</a></li>
         <li><a href="pendientes.html"><i class="fas fa-hourglass-start"></i> Inventarios Pendientes</a></li>
+        <li><a href="detalle.html"><i class="fas fa-table"></i> Detalle de Registros</a></li>
+        <li><a href="reportes.html"><i class="fas fa-download"></i> Reportes y Descargas</a></li>
+        <li><a href="procesamiento.html"><i class="fas fa-cogs"></i> Procesamiento Masivo</a></li>
+        <li><a href="monitoreo-registro.html"><i class="fas fa-sync"></i> Monitoreo</a></li>
+        <li><a href="valores-objetivo.html" class="red-btn"><i class="fas fa-bullseye"></i> Valores Objetivo y Umbrales</a></li>
     </ul>
 </nav>
 

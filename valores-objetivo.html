@@ -254,6 +254,7 @@
             border-radius: 4px;
             display: inline-block;
             cursor: pointer;
+            margin-bottom: 10px;
         }
         .objetivo-panel .file-input input {
             display: none;
@@ -423,6 +424,11 @@
                 padding: 30px 15px;
             }
         }
+
+        /* Additional styles for dynamic fields */
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -441,22 +447,43 @@
     <div class="objetivo-panels">
         <div class="objetivo-panel">
             <h3>Crear Nuevo Valor Objetivo</h3>
-            <label>Código (CECO)</label>
-            <input type="text" placeholder="">
+            <label>Ámbito</label>
+            <select id="scope-select">
+                <option value="cecos">Por CECOS</option>
+                <option value="categoria">Por Categoría</option>
+                <option value="todos">Para Todos</option>
+            </select>
+            <div id="cecos-fields">
+                <label>Código (CECO)</label>
+                <input type="text" id="ceco-code" placeholder="">
+            </div>
+            <div id="categoria-fields" class="hidden">
+                <label>Categoría</label>
+                <select id="categoria-select">
+                    <option value="produccion">Producción Alimentaria</option>
+                    <option value="distribucion">Distribución</option>
+                    <option value="almacenamiento">Almacenamiento</option>
+                    <option value="logistica">Logística</option>
+                    <option value="procesamiento">Procesamiento</option>
+                </select>
+            </div>
             <label>Valor Objetivo</label>
-            <input type="text" placeholder="">
-            <button>Crear</button>
+            <input type="text" id="valor-objetivo" placeholder="">
+            <label>Umbral (%)</label>
+            <input type="text" id="umbral" placeholder="">
+            <button onclick="crearValorObjetivo()">Crear</button>
         </div>
         <div class="objetivo-panel">
             <h3>Subir Excel de Valores Objetivo</h3>
             <div class="file-input">
                 <input type="file" id="file-upload" accept=".xlsx">
                 <label for="file-upload">Elegir archivo</label>
-                <span>No se eligió ningún archivo</span>
+                <span id="file-name">No se eligió ningún archivo</span>
             </div>
+            <button onclick="subirExcel()">Subir</button>
         </div>
     </div>
-    <div class="note">Nota: El Excel debe contener columnas CECO y Valor Objetivo. Ejemplo: CECO001 - 1000, CECO002 - 2000, etc.</div>
+    <div class="note">Nota: El Excel debe contener columnas CECO, Valor Objetivo, Umbral (%). Ejemplo: CECO001 - 1000 - 1.5, CECO002 - 2000 - 0.8, etc.</div>
     <h3>Ejemplo de Valores Objetivo para 5 CECOs</h3>
     <table>
         <thead>
@@ -464,6 +491,7 @@
                 <th>CECO</th>
                 <th>Descripción</th>
                 <th>Valor Objetivo</th>
+                <th>Umbral (%)</th>
             </tr>
         </thead>
         <tbody>
@@ -471,26 +499,31 @@
                 <td>CECO1001</td>
                 <td>Centro de Producción Alimentaria</td>
                 <td>5000</td>
+                <td>1.3</td>
             </tr>
             <tr>
                 <td>CECO1002</td>
                 <td>Centro de Distribución Norte</td>
                 <td>3000</td>
+                <td>0.1</td>
             </tr>
             <tr>
                 <td>CECO1003</td>
                 <td>Centro de Almacenamiento Central</td>
                 <td>4500</td>
+                <td>0.6</td>
             </tr>
             <tr>
                 <td>CECO1004</td>
                 <td>Centro de Logística Sur</td>
                 <td>2500</td>
+                <td>0.4</td>
             </tr>
             <tr>
                 <td>CECO1005</td>
                 <td>Centro de Procesamiento Este</td>
                 <td>3500</td>
+                <td>1.5</td>
             </tr>
         </tbody>
     </table>
@@ -499,6 +532,53 @@
 <footer>
     Prototipo Completo para Sistema Aramark © 2026
 </footer>
+
+<script>
+    // Lógica para mostrar/ocultar campos según ámbito
+    const scopeSelect = document.getElementById('scope-select');
+    const cecosFields = document.getElementById('cecos-fields');
+    const categoriaFields = document.getElementById('categoria-fields');
+
+    scopeSelect.addEventListener('change', () => {
+        const value = scopeSelect.value;
+        cecosFields.classList.toggle('hidden', value !== 'cecos');
+        categoriaFields.classList.toggle('hidden', value !== 'categoria');
+    });
+
+    // Función simulada para crear valor objetivo
+    function crearValorObjetivo() {
+        const scope = document.getElementById('scope-select').value;
+        const valorObjetivo = document.getElementById('valor-objetivo').value;
+        const umbral = document.getElementById('umbral').value;
+        let message = `Creando valor objetivo para ${scope} con valor ${valorObjetivo} y umbral ${umbral}%`;
+        if (scope === 'cecos') {
+            const ceco = document.getElementById('ceco-code').value;
+            message += ` en CECOS ${ceco}`;
+        } else if (scope === 'categoria') {
+            const categoria = document.getElementById('categoria-select').value;
+            message += ` en categoría ${categoria}`;
+        }
+        alert(message);
+        // Aquí iría la lógica real para guardar los datos
+    }
+
+    // Actualizar nombre de archivo seleccionado
+    document.getElementById('file-upload').addEventListener('change', (e) => {
+        const fileName = e.target.files[0]?.name || 'No se eligió ningún archivo';
+        document.getElementById('file-name').textContent = fileName;
+    });
+
+    // Función simulada para subir Excel
+    function subirExcel() {
+        const file = document.getElementById('file-upload').files[0];
+        if (file) {
+            alert(`Subiendo archivo ${file.name} (simulado)`);
+            // Aquí iría la lógica real para procesar el Excel con SheetJS
+        } else {
+            alert('Por favor, seleccione un archivo.');
+        }
+    }
+</script>
 
 </body>
 </html>

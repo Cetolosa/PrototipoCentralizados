@@ -136,7 +136,7 @@
         <!-- Sección añadida para mostrar la descripción visible en la página -->
         <section class="page-description">
             <h2>Descripción de la Página</h2>
-            <p>Esta página permite la gestión integral de los Centros de Costo (CECOS) centralizados en el sistema Aramark. Ofrece una visión general mediante KPIs clave (total de CECOS, operacionales, administrativos y grupos únicos), gráficos de distribución por atributos y agrupadores, herramientas para crear nuevos CECOS individualmente o cargar masivamente vía archivos Excel, una barra de búsqueda para filtrar registros, y opciones para editar o auditar entradas existentes en una tabla interactiva. Esta funcionalidad asegura un control eficiente y actualizado de los centros de costo asociados a contratos y operaciones.</p>
+            <p>Esta página permite la gestión integral de los Centros de Costo (CECOS) centralizados en el sistema Aramark. Ofrece una visión general mediante KPIs clave (total de CECOS, operacionales, administrativos y grupos únicos), gráficos de distribución por atributos y agrupadores, herramientas para crear nuevos CECOS individualmente o cargar masivamente vía archivos Excel, una barra de búsqueda para filtrar registros, y opciones para editar o auditar entradas existentes en una tabla interactiva. Cada CECOS incluye hasta 3 correos electrónicos asociados para notificaciones. Esta funcionalidad asegura un control eficiente y actualizado de los centros de costo asociados a contratos y operaciones.</p>
         </section>
 
         <!-- Fila 1: KPIs -->
@@ -184,6 +184,9 @@
                     <input type="text" id="descripcion" placeholder="Descripción" required>
                     <input type="text" id="atributos" placeholder="Atributos (e.g., Operacional)" required>
                     <input type="text" id="agrupadores" placeholder="Agrupadores (e.g., Grupo A)" required>
+                    <input type="text" id="email1" placeholder="Correo Electrónico 1" required>
+                    <input type="text" id="email2" placeholder="Correo Electrónico 2">
+                    <input type="text" id="email3" placeholder="Correo Electrónico 3">
                     <button type="submit">Crear</button>
                 </form>
             </div>
@@ -194,10 +197,10 @@
             </div>
         </div>
 
-        <p class="note">Esta sección simula la gestión de centros de costo con búsqueda, edición y auditoría. Datos de muestra.</p>
+        <p class="note">Esta sección simula la gestión de centros de costo con búsqueda, edición y auditoría. Datos de muestra, incluyendo correos electrónicos asociados.</p>
 
         <div class="search-bar">
-            <input type="text" id="search-input" placeholder="Buscar por código o descripción...">
+            <input type="text" id="search-input" placeholder="Buscar por código, descripción o correo...">
         </div>
 
         <div class="panel" style="overflow-x: auto;">
@@ -209,6 +212,9 @@
                         <th>Descripción</th>
                         <th>Atributos</th>
                         <th>Agrupadores</th>
+                        <th>Correo Electrónico 1</th>
+                        <th>Correo Electrónico 2</th>
+                        <th>Correo Electrónico 3</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -228,14 +234,14 @@
 
         // Datos iniciales de CECOS
         let cecos = [
-            { codigo: '55016', descripcion: 'BOD CLINICA ALEMANA ASEO', atributos: 'Operacional', agrupadores: 'Grupo A' },
-            { codigo: '41640', descripcion: 'BOD. CLIN DAVILA ASEO EDIF G,I VESTIDORE', atributos: 'Administrativo', agrupadores: 'Grupo B' },
-            { codigo: '30227', descripcion: 'BOD. CAMPAMENTO 5400 ESCONDIDA FOOD', atributos: 'Operacional', agrupadores: 'Grupo C' },
-            { codigo: '30296', descripcion: 'BODEGA C. INDISA', atributos: 'Operacional', agrupadores: 'Grupo A' },
-            { codigo: '32164', descripcion: 'BOD.CAMPAMENTO ARAUCO LA COLCHA', atributos: 'Administrativo', agrupadores: 'Grupo B' },
-            { codigo: '32161', descripcion: 'BOD.CAMPAMENTO ARAUCO MARIA LAS CRUCES', atributos: 'Operacional', agrupadores: 'Grupo C' },
-            { codigo: '32166', descripcion: 'BOD.CAMPAMENTO ARAUCO LA CHINITA', atributos: 'Operacional', agrupadores: 'Grupo A' },
-            { codigo: '32163', descripcion: 'BOD.CAMPAMENTO ARAUCO COLCURA', atributos: 'Administrativo', agrupadores: 'Grupo B' }
+            { codigo: '55016', descripcion: 'BOD CLINICA ALEMANA ASEO', atributos: 'Operacional', agrupadores: 'Grupo A', email1: 'contacto1@aramark.com', email2: 'contacto2@aramark.com', email3: 'contacto3@aramark.com' },
+            { codigo: '41640', descripcion: 'BOD. CLIN DAVILA ASEO EDIF G,I VESTIDORE', atributos: 'Administrativo', agrupadores: 'Grupo B', email1: 'admin1@aramark.com', email2: 'admin2@aramark.com', email3: 'admin3@aramark.com' },
+            { codigo: '30227', descripcion: 'BOD. CAMPAMENTO 5400 ESCONDIDA FOOD', atributos: 'Operacional', agrupadores: 'Grupo C', email1: 'op1@aramark.com', email2: 'op2@aramark.com', email3: 'op3@aramark.com' },
+            { codigo: '30296', descripcion: 'BODEGA C. INDISA', atributos: 'Operacional', agrupadores: 'Grupo A', email1: 'indisa1@aramark.com', email2: 'indisa2@aramark.com', email3: 'indisa3@aramark.com' },
+            { codigo: '32164', descripcion: 'BOD.CAMPAMENTO ARAUCO LA COLCHA', atributos: 'Administrativo', agrupadores: 'Grupo B', email1: 'arauco1@aramark.com', email2: 'arauco2@aramark.com', email3: 'arauco3@aramark.com' },
+            { codigo: '32161', descripcion: 'BOD.CAMPAMENTO ARAUCO MARIA LAS CRUCES', atributos: 'Operacional', agrupadores: 'Grupo C', email1: 'cruces1@aramark.com', email2: 'cruces2@aramark.com', email3: 'cruces3@aramark.com' },
+            { codigo: '32166', descripcion: 'BOD.CAMPAMENTO ARAUCO LA CHINITA', atributos: 'Operacional', agrupadores: 'Grupo A', email1: 'chinita1@aramark.com', email2: 'chinita2@aramark.com', email3: 'chinita3@aramark.com' },
+            { codigo: '32163', descripcion: 'BOD.CAMPAMENTO ARAUCO COLCURA', atributos: 'Administrativo', agrupadores: 'Grupo B', email1: 'colcura1@aramark.com', email2: 'colcura2@aramark.com', email3: 'colcura3@aramark.com' }
         ];
 
         // Función para renderizar la tabla
@@ -244,7 +250,10 @@
             tbody.innerHTML = '';
             const filteredCecos = cecos.filter(ceco => 
                 ceco.codigo.toLowerCase().includes(filter.toLowerCase()) || 
-                ceco.descripcion.toLowerCase().includes(filter.toLowerCase())
+                ceco.descripcion.toLowerCase().includes(filter.toLowerCase()) ||
+                (ceco.email1 && ceco.email1.toLowerCase().includes(filter.toLowerCase())) ||
+                (ceco.email2 && ceco.email2.toLowerCase().includes(filter.toLowerCase())) ||
+                (ceco.email3 && ceco.email3.toLowerCase().includes(filter.toLowerCase()))
             );
             filteredCecos.forEach(ceco => {
                 const tr = document.createElement('tr');
@@ -253,6 +262,9 @@
                     <td>${ceco.descripcion}</td>
                     <td>${ceco.atributos}</td>
                     <td>${ceco.agrupadores}</td>
+                    <td>${ceco.email1 || ''}</td>
+                    <td>${ceco.email2 || ''}</td>
+                    <td>${ceco.email3 || ''}</td>
                     <td>
                         <button class="action-btn" onclick="editCeco('${ceco.codigo}')">Editar</button>
                         <button class="action-btn" onclick="auditCeco('${ceco.codigo}')">Auditoría</button>
@@ -356,7 +368,10 @@
                 codigo: document.getElementById('codigo').value,
                 descripcion: document.getElementById('descripcion').value,
                 atributos: document.getElementById('atributos').value,
-                agrupadores: document.getElementById('agrupadores').value
+                agrupadores: document.getElementById('agrupadores').value,
+                email1: document.getElementById('email1').value,
+                email2: document.getElementById('email2').value,
+                email3: document.getElementById('email3').value
             };
             cecos.push(newCeco);
             updateAll();
@@ -374,7 +389,7 @@
                     const workbook = XLSX.read(data, { type: 'array' });
                     const sheetName = workbook.SheetNames[0];
                     const sheet = workbook.Sheets[sheetName];
-                    const json = XLSX.utils.sheet_to_json(sheet, { header: ['codigo', 'descripcion', 'atributos', 'agrupadores'], range: 1 });
+                    const json = XLSX.utils.sheet_to_json(sheet, { header: ['codigo', 'descripcion', 'atributos', 'agrupadores', 'email1', 'email2', 'email3'], range: 1 });
                     cecos = [...cecos, ...json];
                     updateAll();
                     alert('Excel subido y CECOS agregados (simulado)');
@@ -402,4 +417,3 @@
     </script>
 </body>
 </html>
-

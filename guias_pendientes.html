@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Guías Pendientes - Modelo Oficial Aramark 2026</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <style>
+    :root{
+      --brand-red:#d20000;--brand-dark:#333;--bg-color:#f4f7f6;--border-color:#e0e0e0;--card-bg:#fff;
+      --text-muted:#6c757d;--text-color:#333;--ok:#28a745;--warn:#b58900;
+      --badge-bg:#fff3cd;--badge-border:#ffeeba;--badge-text:#856404;
+      --tip-bg:#eef7ff;--tip-text:#0b5cad;--tip-border:#cfe5ff;
+      --error-bg:#ffe8e6;--error-text:#7b241c;--error-border:#f5c6cb;
+    }
+    :root[data-theme="dark"]{
+      --brand-dark:#f4f7f6;--bg-color:#1f1f1f;--border-color:#444;--card-bg:#2a2a2a;--text-muted:#b0b0b0;--text-color:#f4f7f6;
+      --badge-bg:#3b3a1f;--badge-border:#686534;--badge-text:#f0e68c;
+      --tip-bg:#1d2a39;--tip-text:#9ac3ff;--tip-border:#2a4260;
+      --error-bg:#3a1d1c;--error-text:#ffb3aa;--error-border:#5a2a28;
+    }
+    *{box-sizing:border-box}
+    body{font-family:'Segoe UI',system-ui,-apple-system,Tahoma,Geneva,Verdana,sans-serif;margin:0;background:var(--bg-color);color:var(--text-color);transition:.3s}
+    header{background:var(--brand-red);color:#fff;padding:15px 30px;display:flex;justify-content:space-between;align-items:center;position:fixed;top:0;width:100%;z-index:1000;box-shadow:0 4px 6px rgba(0,0,0,.1)}
+    .nav-left{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    .nav-left div{font-size:1.2em;font-weight:bold}
+    .theme-toggle,.user-chip{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;padding:8px 16px;border-radius:999px;font-size:.9em;cursor:pointer;font-weight:600}
+    .user-chip{background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.6)}
+    .nav-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;padding:8px 18px;border-radius:999px;font-size:.9em;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none;display:inline-block}
+    .nav-btn:hover{background:rgba(255,255,255,.3);border-color:rgba(255,255,255,.7);transform:translateY(-1px)}
+
+    .view-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;font-size:.9em;font-weight:600;background:#fff3cd;color:#856404;border:1px solid #ffeeba}
+    .view-badge .dot{width:8px;height:8px;border-radius:50%;background:#ffaa00;display:inline-block}
+    .hidden{display:none!important}
+
+    .container{padding:30px;max-width:1400px;margin:auto;margin-top:100px}
+
+    /* DESCRIPCIÓN ACTUALIZADA */
+    .page-description{max-width:1400px;margin:20px auto;background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,.1);overflow:hidden}
+    .desc-header{display:flex;justify-content:space-between;align-items:center;padding:15px 20px;background:rgba(210,0,0,.05);cursor:pointer}
+    .desc-header h2{margin:0;font-size:1.1em;color:var(--brand-red)}
+    .toggle-btn{background:none;border:none;font-size:1.4em;color:var(--brand-red);cursor:pointer;transition:transform .3s ease}
+    .desc-content{padding:12px 20px 16px 20px;height:260px;overflow:auto;transition:height .4s ease,padding .4s ease}
+    .page-description.collapsed .desc-content{height:0!important;padding:0!important;overflow:hidden}
+    .page-description.collapsed .toggle-btn{transform:rotate(-90deg)}
+
+    /* resto de estilos (sin cambios) */
+    .upload-card{background:#fff;border-radius:12px;padding:24px 32px;box-shadow:0 4px 12px rgba(0,0,0,.06);margin-bottom:24px}
+    .upload-card h3{margin:0 0 8px 0;font-size:1.25em;font-weight:600;color:#222}
+    .upload-card p{margin:0 0 20px 0;color:var(--text-muted);font-size:.95em}
+    .upload-btn{background:#f8f9fa;color:#555;border:1px solid #e0e0e0;padding:12px 24px;border-radius:8px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:10px;transition:all .2s}
+    .upload-btn:hover{background:#f0f0f0;border-color:#ccc;transform:translateY(-1px)}
+
+    .summary-section{max-width:1400px;margin:25px auto;background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,.1);overflow:hidden}
+    .summary-header{display:flex;justify-content:space-between;align-items:center;padding:14px 24px;background:#fff0f0;color:var(--brand-red);font-weight:700;font-size:1.15em;cursor:pointer}
+    .summary-scroll-container{max-height:380px;overflow-y:auto;padding:20px}
+    .summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+    .summary-card{background:var(--card-bg);padding:20px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.08);border:2px solid transparent;transition:.3s}
+    .summary-card:hover{border-color:var(--brand-red);transform:translateY(-4px)}
+
+    .filters-card{background:#fff;border-radius:12px;padding:24px;box-shadow:0 4px 12px rgba(0,0,0,.06);margin-bottom:24px}
+    .filters-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+    .filters input{padding:12px 16px;border:1px solid #e0e0e0;border-radius:8px;background:#fff;color:#333;font-size:.95em;flex:1;min-width:180px}
+    .status-filters{display:flex;gap:16px;align-items:center}
+    .status-filters label{display:flex;align-items:center;gap:8px;font-weight:500;cursor:pointer;color:#333}
+    .status-filters input[type="checkbox"]{accent-color:#0d6efd;width:18px;height:18px}
+    .dates{display:flex;gap:8px;align-items:center}
+    .label{font-weight:600;color:#555;margin-right:6px}
+    .date-input{padding:10px 12px;border:1px solid #e0e0e0;border-radius:8px;background:#fff;color:#333}
+
+    .action-group{display:flex;gap:12px;margin-left:auto}
+    .action-btn{padding:11px 24px;border:none;border-radius:8px;font-weight:600;cursor:pointer;transition:all .2s}
+    .vista-btn{background:#d20000;color:#fff}
+    .vista-btn:hover{background:#b20000;transform:translateY(-1px)}
+    .export-btn{background:#d20000;color:#fff}
+    .export-btn:hover{background:#b20000;transform:translateY(-1px)}
+    .clear-btn{background:#555;color:#fff}
+    .clear-btn:hover{background:#333}
+
+    .mass-actions{margin-bottom:25px;display:flex;gap:12px;flex-wrap:wrap}
+    .mass-btn{padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px}
+    #btn-select-all{background:#d20000;color:#fff;border:none}
+    #btn-select-all:hover{background:#b20000}
+    #btn-register-all{background:#28a745;color:#fff;border:none}
+    #btn-register-all:hover{background:#218838}
+    #btn-register-all:disabled{background:#ccc;color:#666;cursor:not-allowed;opacity:0.6}
+
+    .table-container{position:relative}
+    .top-scroll{overflow-x:auto;overflow-y:hidden;height:16px;margin-bottom:2px}
+    .top-scroll-inner{height:16px;width:3800px}
+    .table-wrapper{max-height:680px;overflow:auto;border:1px solid var(--border-color);border-radius:8px;background:var(--card-bg)}
+    table{width:100%;min-width:3800px;border-collapse:collapse;font-size:.95em;table-layout:fixed}
+    th,td{border-bottom:1px solid var(--border-color);padding:12px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    th{background:#f8f9fa;position:sticky;top:0;z-index:30;cursor:pointer}
+    tr:hover{background:rgba(210,0,0,.05)}
+    tr.pending-row td{color:var(--ok);font-weight:bold}
+
+    .row-action,.obs-btn{padding:8px 18px;border:1px solid #ddd;background:#fff;color:#333;border-radius:6px;font-size:.85em;cursor:pointer;transition:all .2s;font-weight:500}
+    .row-action{background:#d20000;color:#fff;border-color:#d20000}
+    .row-action:hover{background:#b20000}
+    .obs-btn{background:#d20000;color:#fff;border-color:#d20000}
+    .obs-btn:hover{background:#b20000}
+    .row-action:disabled{background:#ccc;color:#666;cursor:not-allowed;opacity:0.6}
+
+    .badge{padding:5px 12px;border-radius:20px;font-size:.8em;font-weight:600;display:inline-flex;gap:5px;background:#eee;color:#333}
+    .badge-dot{width:8px;height:8px;background:var(--brand-red);border-radius:50%}
+
+    .toast{position:fixed;top:20px;right:20px;background:var(--ok);color:#fff;padding:12px 20px;border-radius:8px;font-weight:500;z-index:3000;display:none;align-items:center;gap:8px;max-width:350px;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+
+    /* MODAL OBS (SIN NOTAS) */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:2000}
+    .modal{background:var(--card-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.25);overflow:hidden}
+    .obs-modal { width: min(820px, 94vw); max-height: 85vh; overflow: hidden; }
+    .modal-header{padding:16px 20px;background:rgba(210,0,0,.06);display:flex;align-items:center;justify-content:space-between}
+    .modal-title{margin:0;font-size:1.05em;color:var(--brand-red)}
+    .modal-body{padding:18px 20px;display:grid;gap:12px}
+    .modal-footer{padding:14px 20px;display:flex;gap:10px;justify-content:flex-end;background:rgba(0,0,0,.03)}
+    .obs-body { max-height: calc(85vh - 140px); overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 28px; }
+    .obs-section { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,.06); }
+    .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; font-size: 1.05em; color: var(--brand-red); }
+    .section-icon { font-size: 1.45em; }
+    .obs-identification { font-size: 0.92em; color: var(--text-muted); margin-top: 4px; font-family: ui-monospace, monospace; }
+    #obs-comentario { width: 100%; min-height: 130px; resize: vertical; padding: 14px; border: 2px solid var(--border-color); border-radius: 8px; font-size: 1em; }
+    #obs-comentario:focus { border-color: var(--brand-red); outline: none; box-shadow: 0 0 0 3px rgba(210,0,0,.12); }
+    .textarea-footer { margin-top: 8px; font-size: 0.85em; }
+    .obs-preview { background: var(--tip-bg); color: var(--tip-text); border: 2px dashed var(--tip-border); padding: 18px; border-radius: 10px; font-family: ui-monospace, monospace; white-space: pre-line; line-height: 1.6; max-height: 160px; overflow-y: auto; box-shadow: inset 0 2px 6px rgba(0,0,0,.05); }
+    .footer-info { display: flex; align-items: center; gap: 8px; font-size: 0.9em; }
+    .modal-btn{padding:10px 20px;border:none;border-radius:8px;font-weight:600;cursor:pointer}
+    .modal-btn.secondary{background:#555;color:#fff}
+    .modal-btn.primary{background:var(--brand-red);color:#fff}
+    .pill{border:1px solid var(--border-color);padding:4px 8px;border-radius:999px;font-size:.8em;background:rgba(0,0,0,.04)}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace}
+    .muted{color:var(--text-muted);font-size:.85em}
+
+    /* FIX SCROLL */
+    #resumen-section:not(.collapsed) .desc-content {
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        padding: 12px 20px 28px 20px;
+    }
+    #resumen-section .summary-scroll-container {
+        max-height: 480px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="nav-left">
+    <div>Guías Pendientes</div>
+    <button class="theme-toggle" id="theme-toggle">Modo oscuro</button>
+    <span class="user-chip" id="user-chip">Tolosa Delpino, Christian • Administrador</span>
+    <span class="view-badge hidden" id="view-badge"><span class="dot"></span> Vista CECO 600624</span>
+  </div>
+  <div style="display:flex;gap:12px;">
+    <a href="contabilizacion.html" class="nav-btn">Volver</a>
+    <a href="Mapa.html" class="nav-btn">Mapa del sitio</a>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- DESCRIPCIÓN ACTUALIZADA -->
+  <section class="page-description" id="page-description">
+    <div class="desc-header" id="desc-header">
+      <h2>Descripción del Sistema – Modelo Oficial Aramark 2026</h2>
+      <button class="toggle-btn" id="toggle-desc">▼</button>
+    </div>
+    <div class="desc-content">
+      <p><strong>¿Qué es esta página?</strong><br>
+        Esta es la **pantalla oficial de Guías Pendientes** del Sistema Centralizado de Aramark. Muestra en tiempo real todas las guías pendientes de procesamiento automático, permitiendo filtrado inteligente, revisión de KPIs, distribución por CECO, gestión de observaciones (OBS) y exportación profesional a Excel.</p>
+
+      <p><strong>Funcionalidades principales:</strong></p>
+      <ul>
+        <li><strong>Visualización completa y KPIs en vivo</strong>: Guía ID, SendDate, DestineCode, CDOrigen, NPedido, Agrupador, Regla, Faltante y Estado con resaltado automático.</li>
+        <li><strong>Drill-down y acciones por fila</strong>: Botones “OBS” y “Registrar” idénticos al modelo oficial. Clic en encabezados para ordenar.</li>
+        <li><strong>Gestión avanzada de Observaciones (OBS)</strong>: Cada comentario se guarda como un **registro independiente** en la tabla (una misma guía puede tener múltiples comentarios de diferentes roles). El modal ya no incluye sección de notas.</li>
+        <li><strong>Columnas OBS completas</strong>: Observación, Responsable, Rol y Fecha/Hora Comentario (ordenables y filtrables).</li>
+        <li><strong>Acciones masivas y exportación</strong>: Seleccionar todos + Registrar Seleccionados + Exportar Excel completo.</li>
+        <li><strong>Resumen ejecutivo dinámico</strong>: Tarjetas en tiempo real con Total de guías, CECOs únicos, Pendientes, Excepciones y Comentados.</li>
+        <li><strong>Filtros inteligentes</strong>: Búsqueda por Guía ID, CECO, Agrupador, Regla, Faltante + checkboxes de estado + rango de fechas.</li>
+      </ul>
+
+      <p><strong>Reglas del sistema:</strong></p>
+      <ul>
+        <li><strong>Unicidad y seguridad</strong>: Siempre se garantiza un registro por CECO en la vista 600624 (modo Contratos).</li>
+        <li><strong>Modo Administrador vs Contratos</strong>: Inicia en Administrador. El botón “Vista 600624” activa el modo restringido con OBS habilitado (solo visualización + guardar comentarios).</li>
+        <li><strong>Estado automático</strong>: “Pendiente” y “Excepción” se resaltan en verde; “Comentado” se actualiza en vivo tras guardar OBS.</li>
+      </ul>
+
+      <p style="background:var(--tip-bg);padding:12px;border-left:4px solid var(--tip-border);margin:12px 0;color:var(--tip-text);">
+        <i class="fa-solid fa-lightbulb"></i> <strong>Tip:</strong> Cada OBS genera un registro nuevo en la tabla. Usa las columnas “Responsable” y “Rol” para filtrar y ordenar fácilmente.
+      </p>
+
+      <p class="muted">Prototipo 100% funcional y offline – Modelo Oficial Aramark 2026. Listo para replicación en todos los módulos de guías y pendientes.</p>
+    </div>
+  </section>
+
+  <!-- CARGA MASIVA -->
+  <div class="upload-card">
+    <h3>Carga Masiva de Guías Pendientes</h3>
+    <p>Simula la ingesta automática de datos desde la vista "Guías pendientes" de la base de datos Brand.</p>
+    <button onclick="document.getElementById('excel-upload').click()" class="upload-btn">
+      <i class="fas fa-file-upload"></i> Subir Guías
+    </button>
+    <input type="file" id="excel-upload" accept=".xlsx,.xls" style="display:none;">
+  </div>
+
+  <!-- RESUMEN GENERAL -->
+  <section class="summary-section page-description" id="resumen-section">
+    <div class="summary-header" id="resumen-header">
+      <span>Resumen General de Guías Pendientes</span>
+      <button class="toggle-btn" id="toggle-resumen">▼</button>
+    </div>
+    <div class="desc-content">
+      <div class="summary-scroll-container">
+        <div class="summary-grid" id="summary-grid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FILTROS -->
+  <div class="filters-card">
+    <div class="filters-row">
+      <input type="text" id="filter-guia" placeholder="Filtrar Guía ID">
+      <input type="text" id="filter-cecos" placeholder="Filtrar CECOS">
+      <input type="text" id="filter-agrupador" placeholder="Filtrar Agrupador">
+      <input type="text" id="filter-regla" placeholder="Filtrar Regla">
+      <input type="text" id="filter-faltante" placeholder="Filtrar Faltante">
+
+      <div class="status-filters">
+        <label><input type="checkbox" class="status-filter" value="Pendiente" checked> Pendiente</label>
+        <label><input type="checkbox" class="status-filter" value="Excepción" checked> Excepción</label>
+        <label><input type="checkbox" class="status-filter" value="Comentado" checked> Comentado</label>
+      </div>
+
+      <div class="dates">
+        <span class="label">Rango de Fechas:</span>
+        <input type="date" id="fecha-desde" value="2026-03-01" class="date-input">
+        <span style="color:var(--text-muted);">hasta</span>
+        <input type="date" id="fecha-hasta" value="2026-03-31" class="date-input">
+      </div>
+
+      <div class="action-group">
+        <button class="action-btn vista-btn" id="vista-600624">Vista 600624</button>
+        <button class="action-btn export-btn" id="btn-export">Exportar Excel</button>
+        <button class="action-btn clear-btn" id="clear-filters">Limpiar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTONES MASIVOS -->
+  <div class="mass-actions">
+    <button id="btn-select-all" class="mass-btn">Seleccionar Todos</button>
+    <button id="btn-register-all" class="mass-btn"><i class="fas fa-play"></i> Registrar Seleccionados</button>
+  </div>
+
+  <!-- TABLA -->
+  <div class="table-container">
+    <div class="top-scroll" id="top-scroll"><div class="top-scroll-inner" id="top-scroll-inner"></div></div>
+    <div class="table-wrapper" id="table-wrapper">
+      <table id="guias-table">
+        <thead>
+          <tr>
+            <th class="th-noclick" style="width:48px;position:sticky;left:0;z-index:31;background:#f8f9fa;"><input type="checkbox" id="select-all"></th>
+            <th style="width:100px;position:sticky;left:48px;z-index:31;background:#f8f9fa;" onclick="sortTable('estado')">Estado</th>
+            <th style="width:100px;position:sticky;left:148px;z-index:31;background:#f8f9fa;" onclick="sortTable('DestineCode')">DestineCode</th>
+            <th style="width:120px;position:sticky;left:248px;z-index:31;background:#f8f9fa;" onclick="sortTable('NPedido')">NPedido</th>
+            <th onclick="sortTable('guiaId')">Guía ID</th>
+            <th onclick="sortTable('SendDate')">SendDate</th>
+            <th onclick="sortTable('CDOrigen')">CDOrigen</th>
+            <th onclick="sortTable('agrupador')">Agrupador</th>
+            <th onclick="sortTable('regla')">Regla</th>
+            <th onclick="sortTable('faltante')">Faltante</th>
+            <th onclick="sortTable('observacion')">Observación</th>
+            <th onclick="sortTable('responsable')">Responsable</th>
+            <th onclick="sortTable('rol')">Rol</th>
+            <th onclick="sortTable('comentarioFecha')">Fecha/Hora Comentario</th>
+            <th onclick="sortTable('notasCount')">Notas (#)</th>
+            <th class="th-noclick">Acción</th>
+          </tr>
+        </thead>
+        <tbody id="guias-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL OBS (SIN NOTAS) -->
+<div class="modal-backdrop" id="obs-backdrop">
+  <div class="modal obs-modal" role="dialog" aria-modal="true" aria-labelledby="obs-title">
+    <div class="modal-header">
+      <div>
+        <h3 class="modal-title" id="obs-title">Observación OBS - Guía Pendiente</h3>
+        <div id="obs-ident" class="obs-identification"></div>
+      </div>
+      <button class="modal-btn secondary" id="obs-close">✕</button>
+    </div>
+    <div class="modal-body obs-body">
+      <div class="obs-section">
+        <div class="section-header"><span class="section-icon">💬</span><strong>Comentario Principal</strong></div>
+        <textarea id="obs-comentario" rows="5" placeholder="Escribe aquí el comentario principal de la guía..."></textarea>
+        <div class="textarea-footer"><small class="muted">Al guardar se creará un **nuevo registro independiente** en la tabla.</small></div>
+      </div>
+      <div class="obs-section">
+        <div class="section-header"><span class="section-icon">👁️</span><strong>Vista Previa de la Observación Final</strong></div>
+        <div id="obs-preview" class="obs-preview"></div>
+        <small class="muted">Esta es exactamente la observación que quedará guardada como registro separado.</small>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <div class="footer-info"><span class="muted">Responsable actual:</span><strong id="obs-user" class="pill"></strong></div>
+      <div>
+        <button class="modal-btn secondary" id="obs-cancel">Cancelar</button>
+        <button class="modal-btn primary" id="obs-save">Guardar Comentario</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"><span id="toast-text"></span></div>
+
+<footer>Prototipo Premium Aramark © 2026 – Guías Pendientes (Modelo Oficial)</footer>
+
+<script>
+/* ======================== ESTADO GLOBAL ======================== */
+let guias = [];
+let filtered = [];
+const state = { sortField:null, sortDir:'asc' };
+let vistaContratos = false;
+let obsCurrentId = null;
+let currentRol = "Administrador";
+
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+function showToast(msg, type='ok'){
+  const t = $('#toast');
+  const s = $('#toast-text');
+  if(!t || !s) return;
+  t.style.background = type==='ok' ? 'var(--ok)' : '#b58900';
+  s.textContent = msg; 
+  t.style.display = 'flex'; t.style.opacity = '1';
+  setTimeout(()=>{ t.style.opacity='0'; setTimeout(()=>{t.style.display='none';},400); }, 2800);
+}
+
+function debounce(fn, wait=250){
+  let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), wait); };
+}
+
+function escapeHTML(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+/* ======================== DATOS ======================== */
+function generateInitialGuias() {
+  let id = 1;
+  const cecosList = [55016,41640,30227,30296,32164,32161,32166,32163,32162,32168,600624];
+  const agrupadorMap = new Map([[55016,"BOD Clinica Alemana"],[41640,"BOD Clin Davila"],[30227,"Escondida Food"],[30296,"Escondida Another"],[32164,"Arauco La Colcha"],[32161,"Arauco A"],[32166,"Arauco B"],[32163,"Arauco C"],[32162,"Arauco D"],[32168,"Arauco E"],[600624,"CECO Contratos Principal"]]);
+  const reglas = ['Inmediato', '48 horas', 'Excepción'];
+
+  cecosList.forEach(ceco => {
+    const cantidad = (ceco === 600624) ? 12 : Math.floor(Math.random() * 9) + 4;
+    for (let i = 0; i < cantidad; i++) {
+      const day = Math.floor(Math.random() * 10) + 1;
+      const estados = (ceco === 600624) ? ["Pendiente","Excepción","Comentado"] : ["Pendiente","Excepción"];
+      guias.push({
+        guiaId: id.toString().padStart(3,'0'),
+        SendDate: `2026-03-${day.toString().padStart(2,'0')}`,
+        DestineCode: ceco,
+        CDOrigen: `CD-00${Math.floor(Math.random()*3)+1}`,
+        NPedido: `PED-${1000 + id}`,
+        agrupador: agrupadorMap.get(ceco),
+        regla: reglas[Math.floor(Math.random()*reglas.length)],
+        faltante: "Pendiente",
+        estado: (ceco === 600624) ? estados[i % 3] : estados[Math.floor(Math.random()*estados.length)],
+        comentario: "", responsable: "", fechaComentario: "", notas: [], rol: ""
+      });
+      id++;
+    }
+  });
+}
+
+/* ======================== MODAL OBS (SIN NOTAS) ======================== */
+function recomputeObservacion(row){
+  const hasC = row.comentario && row.comentario.trim() !== "";
+  if(!hasC){row.comentario = ""; return;}
+  row.comentario = `Observación:\nComentario: ${row.comentario}`;
+}
+
+function updateObsPreview(row){
+  recomputeObservacion(row);
+  document.getElementById('obs-preview').textContent = row.comentario || '—';
+}
+
+function openObs(idx){
+  obsCurrentId = idx;
+  const row = guias[idx];
+  if(!row) return;
+
+  document.getElementById('obs-ident').innerHTML = `Guía: <strong>${row.guiaId}</strong> | CECO: <strong>${row.DestineCode}</strong>`;
+  document.getElementById('obs-comentario').value = row.comentario || '';
+  document.getElementById('obs-user').textContent = "Tolosa Delpino, Christian";
+
+  updateObsPreview(row);
+  document.getElementById('obs-backdrop').style.display = 'flex';
+}
+
+function closeObs(){
+  document.getElementById('obs-backdrop').style.display = 'none';
+  obsCurrentId = null;
+}
+
+/* ======================== Resto del código ======================== */
+function applyFilters(){
+  const fGuia = ($('#filter-guia')?.value || '').trim().toLowerCase();
+  const fCeco = ($('#filter-cecos')?.value || '').trim().toLowerCase();
+  const fAgrup = ($('#filter-agrupador')?.value || '').trim().toLowerCase();
+  const fRegla = ($('#filter-regla')?.value || '').trim().toLowerCase();
+  const fFalt = ($('#filter-faltante')?.value || '').trim().toLowerCase();
+
+  const allowed = $$('.status-filter').filter(cb=>cb.checked).map(cb=>cb.value.toLowerCase());
+
+  const d1 = $('#fecha-desde')?.value || '1900-01-01';
+  const d2 = $('#fecha-hasta')?.value || '2900-12-31';
+  const desde = new Date(d1+'T00:00:00');
+  const hasta = new Date(d2+'T23:59:59');
+
+  filtered = guias.filter(g=>{
+    if (fGuia && !g.guiaId.toLowerCase().includes(fGuia)) return false;
+    if (fCeco && !String(g.DestineCode).includes(fCeco)) return false;
+    if (fAgrup && !g.agrupador.toLowerCase().includes(fAgrup)) return false;
+    if (fRegla && !g.regla.toLowerCase().includes(fRegla)) return false;
+    if (fFalt && !g.faltante.toLowerCase().includes(fFalt)) return false;
+    if (allowed.length && !allowed.includes(g.estado.toLowerCase())) return false;
+
+    const fechaGuia = new Date(g.SendDate+'T12:00:00');
+    if (fechaGuia < desde || fechaGuia > hasta) return false;
+
+    if (vistaContratos && g.estado !== "Comentado") return false;
+    return true;
+  }).map(g => ({
+    ...g,
+    notasCount: Array.isArray(g.notas) ? g.notas.length : 0
+  }));
+
+  if (state.sortField) {
+    const dir = state.sortDir === 'asc' ? 1 : -1;
+    filtered.sort((a,b) => {
+      if (state.sortField === 'SendDate') return (new Date(a.SendDate) - new Date(b.SendDate)) * dir;
+      if (state.sortField === 'DestineCode') return (Number(a.DestineCode) - Number(b.DestineCode)) * dir;
+      if (state.sortField === 'notasCount') return ((a.notasCount||0) - (b.notasCount||0)) * dir;
+      return String(a[state.sortField]??'').localeCompare(String(b[state.sortField]??''),'es',{numeric:true}) * dir;
+    });
+  }
+}
+
+function sortTable(field){
+  if (state.sortField === field) state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+  else { state.sortField = field; state.sortDir = 'asc'; }
+  updateAll();
+}
+
+function renderTable(){
+  const tbody = $('#guias-tbody');
+  if(!tbody) return;
+  tbody.innerHTML = "";
+  filtered.forEach((g, idx) => {
+    const tr = document.createElement('tr');
+    if (g.estado === "Pendiente") tr.classList.add('pending-row');
+
+    let obsSnippet = '<span class="muted">—</span>';
+    if(g.comentario){
+      const lines = g.comentario.split('\n').filter(l=>l.trim()!=='' && !l.startsWith('Observación:') && !l.startsWith('-----'));
+      if(lines.length>0) obsSnippet = `<span class="badge"><span class="badge-dot"></span> ${escapeHTML(lines[0]).slice(0,60)}${lines[0].length>60?'...':''}</span>`;
+    }
+
+    const registrarBtn = vistaContratos 
+      ? `<button class="row-action" disabled style="opacity:0.6;cursor:not-allowed">Registrar</button>` 
+      : `<button class="row-action" onclick="registrarGuia('${g.guiaId}')">Registrar</button>`;
+
+    tr.innerHTML = `
+      <td style="position:sticky;left:0;z-index:30;background:var(--card-bg);"><input type="checkbox" class="row-checkbox" data-id="${g.guiaId}"></td>
+      <td style="position:sticky;left:48px;z-index:30;background:var(--card-bg);">${g.estado}</td>
+      <td style="position:sticky;left:148px;z-index:30;background:var(--card-bg);">${g.DestineCode}</td>
+      <td style="position:sticky;left:248px;z-index:30;background:var(--card-bg);">${g.NPedido}</td>
+      <td>${g.guiaId}</td>
+      <td>${g.SendDate}</td>
+      <td>${g.CDOrigen}</td>
+      <td>${g.agrupador}</td>
+      <td>${g.regla}</td>
+      <td>${g.faltante}</td>
+      <td>${obsSnippet}</td>
+      <td>${g.responsable ? escapeHTML(g.responsable) : '<span class="muted">—</span>'}</td>
+      <td>${g.rol || '<span class="muted">—</span>'}</td>
+      <td>${g.fechaComentario ? escapeHTML(g.fechaComentario) : '<span class="muted">—</span>'}</td>
+      <td>${g.notasCount || 0}</td>
+      <td>
+        <button class="obs-btn" onclick="openObs(${idx});event.stopPropagation()">OBS</button>
+        ${registrarBtn}
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderSummaryCards(){
+  const grid = $('#summary-grid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  const total = filtered.length;
+  const uniq = new Set(filtered.map(g=>g.DestineCode)).size;
+  const cPend = filtered.filter(g=>g.estado==='Pendiente').length;
+  const cExcp = filtered.filter(g=>g.estado==='Excepción').length;
+  const cComm = filtered.filter(g=>g.estado==='Comentado').length;
+
+  const cards = [
+    {t:'Total de guías', v:total, s:'Conjunto actual (filtrado)'},
+    {t:'CECOS únicos', v:uniq, s:'Distribución por destino'},
+    {t:'Pendientes', v:cPend, s:'Estado = Pendiente'},
+    {t:'Excepciones', v:cExcp, s:'Estado = Excepción'},
+    {t:'Comentados', v:cComm, s:'Marcados por OBS'}
+  ];
+  cards.forEach(c=>{
+    const el = document.createElement('div'); el.className='summary-card';
+    el.innerHTML = `<h4>${c.t}</h4><div style="font-size:2em;font-weight:700;color:var(--brand-red);">${c.v}</div><div class="sub" style="color:var(--text-muted);font-size:.9em;">${c.s}</div>`;
+    grid.appendChild(el);
+  });
+}
+
+function updateAll(){
+  applyFilters();
+  renderTable();
+  renderSummaryCards();
+}
+
+function registrarGuia(id){
+  if(vistaContratos) return;
+  const guia = guias.find(g=>g.guiaId===id);
+  if(guia){
+    guia.faltante = 'Registrada';
+    guia.estado = 'Comentado';
+    updateAll();
+    showToast(` Guía ${id} registrada`);
+  }
+}
+
+function processAllSelected(){
+  if(vistaContratos) return showToast('No permitido en modo Contratos','warn');
+  const checked = $$('.row-checkbox:checked');
+  if(checked.length===0) return showToast('Selecciona guías primero','warn');
+  checked.forEach(cb=>{ registrarGuia(cb.dataset.id); });
+  showToast(` Registradas ${checked.length} guías`);
+}
+
+function exportExcel(){
+  const ws = XLSX.utils.json_to_sheet(filtered);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Guías Pendientes");
+  XLSX.writeFile(wb, `Guias_Pendientes_${new Date().toISOString().slice(0,10)}.xlsx`);
+  showToast(' Exportado a Excel');
+}
+
+/* ======================== INICIALIZACIÓN ======================== */
+window.onload = function(){
+  generateInitialGuias();
+  filtered = guias.slice();
+
+  const root = document.documentElement;
+  const themeToggle = $('#theme-toggle');
+  const saved = localStorage.getItem('theme')||'light';
+  root.setAttribute('data-theme',saved);
+  if(themeToggle){
+    themeToggle.textContent = saved==='dark'?'☀️ Modo claro':'🌙 Modo oscuro';
+    themeToggle.addEventListener('click',()=>{
+      const cur = root.getAttribute('data-theme')==='dark'?'light':'dark';
+      root.setAttribute('data-theme',cur);
+      localStorage.setItem('theme',cur);
+      themeToggle.textContent = cur==='dark'?'☀️ Modo claro':'🌙 Modo oscuro';
+    });
+  }
+
+  $('#desc-header').addEventListener('click',()=>{ $('#page-description')?.classList.toggle('collapsed'); });
+  $('#resumen-header').addEventListener('click',()=>{ $('#resumen-section')?.classList.toggle('collapsed'); });
+
+  const wrapper = $('#table-wrapper');
+  const topScroll = $('#top-scroll');
+  if(wrapper && topScroll){
+    wrapper.addEventListener('scroll',()=>{topScroll.scrollLeft=wrapper.scrollLeft;});
+    topScroll.addEventListener('scroll',()=>{wrapper.scrollLeft=topScroll.scrollLeft;});
+  }
+
+  ['filter-guia','filter-cecos','filter-agrupador','filter-regla','filter-faltante','fecha-desde','fecha-hasta'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('input',debounce(updateAll,250));
+  });
+  $$('.status-filter').forEach(cb=>cb.addEventListener('change',updateAll));
+
+  $('#btn-register-all').addEventListener('click',processAllSelected);
+  $('#btn-export').addEventListener('click',exportExcel);
+  $('#btn-select-all').addEventListener('click',()=>{ $$('.row-checkbox').forEach(cb=>cb.checked=!cb.checked); });
+  $('#clear-filters').addEventListener('click',()=>{
+    ['filter-guia','filter-cecos','filter-agrupador','filter-regla','filter-faltante'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+    $('#fecha-desde').value='2026-03-01';
+    $('#fecha-hasta').value='2026-03-31';
+    $$('.status-filter').forEach(cb=>cb.checked=true);
+    vistaContratos=false;
+    currentRol = "Administrador";
+    $('#user-chip').textContent = 'Tolosa Delpino, Christian • Administrador';
+    $('#view-badge').classList.add('hidden');
+    document.getElementById('btn-register-all').disabled = false;
+    updateAll();
+    showToast('Filtros limpiados');
+  });
+
+  $('#vista-600624').addEventListener('click',()=>{
+    vistaContratos = true;
+    currentRol = "Contratos";
+    $('#user-chip').textContent = 'Tolosa Delpino, Christian • Contratos • CECO 600624';
+    $('#view-badge').classList.remove('hidden');
+    document.getElementById('btn-register-all').disabled = true;
+    updateAll();
+    showToast('Vista 600624 activada (modo Contratos – solo OBS)');
+  });
+
+  /* Listeners del modal OBS (sin notas) */
+  document.getElementById('obs-close').addEventListener('click', closeObs);
+  document.getElementById('obs-cancel').addEventListener('click', closeObs);
+
+  document.getElementById('obs-save').addEventListener('click', () => {
+    if(obsCurrentId === null) return;
+    const original = guias[obsCurrentId];
+    const txt = document.getElementById('obs-comentario').value.trim();
+    if(!txt) return showToast('El comentario no puede estar vacío','warn');
+
+    // CREAR NUEVO REGISTRO INDEPENDIENTE
+    const nuevoRegistro = {...original};
+    nuevoRegistro.comentario = txt;
+    nuevoRegistro.estado = "Comentado";
+    nuevoRegistro.responsable = "Tolosa Delpino, Christian";
+    nuevoRegistro.fechaComentario = new Date().toLocaleString('es-CL');
+    nuevoRegistro.rol = currentRol;
+    nuevoRegistro.notas = [];
+
+    guias.push(nuevoRegistro);
+    updateObsPreview(nuevoRegistro);
+    updateAll();
+    showToast('Comentario guardado como nuevo registro independiente');
+    closeObs();
+  });
+
+  setTimeout(() => { updateAll(); }, 400);
+};
+</script>
+</body>
+</html>

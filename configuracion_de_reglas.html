@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración de Reglas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <style>
+        :root {
+            --brand-red: #d20000;
+            --brand-dark: #333333;
+            --bg-color: #f4f7f6;
+            --border-color: #e0e0e0;
+            --card-bg: #ffffff;
+            --text-muted: #6c757d;
+            --text-color: #333333;
+        }
+        :root[data-theme="dark"] {
+            --brand-dark: #f4f7f6;
+            --bg-color: #1f1f1f;
+            --border-color: #444444;
+            --card-bg: #2a2a2a;
+            --text-muted: #b0b0b0;
+            --text-color: #f4f7f6;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        header {
+            background-color: var(--brand-red);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+        .nav-left { display: flex; align-items: center; gap: 15px; }
+        .nav-left div { font-size: 1.2em; font-weight: bold; }
+        .theme-toggle {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.4);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 16px;
+            font-size: 0.85em;
+            cursor: pointer;
+        }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 0.9em;
+        }
+
+        .container { padding: 30px; max-width: 1200px; margin: auto; margin-top: 100px; }
+        h2 { border-bottom: 3px solid var(--brand-red); padding-bottom: 10px; margin-top: 0; }
+
+        .page-description {
+            max-width: 1200px;
+            margin: 25px auto;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        .desc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px;
+            background-color: rgba(210,0,0,0.05);
+            cursor: pointer;
+        }
+        .desc-header h2 { margin: 0; font-size: 1.1em; color: var(--brand-red); }
+        .toggle-btn {
+            background: none;
+            border: none;
+            font-size: 1.4em;
+            color: var(--brand-red);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .desc-content {
+            padding: 0 25px 25px 25px;
+            max-height: 400px;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+        .page-description.collapsed .desc-content {
+            max-height: 0;
+            padding-bottom: 0;
+        }
+        .page-description.collapsed .toggle-btn {
+            transform: rotate(-90deg);
+        }
+
+        .panel { background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid var(--border-color); }
+        .panel-title { margin-top: 0; font-size: 1.1em; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+
+        form { display: flex; flex-direction: column; gap: 12px; }
+        input[type="text"], input[type="number"], input[type="date"], select { 
+            padding: 10px; 
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; 
+            background: var(--card-bg); 
+            color: var(--text-color); 
+        }
+
+        .button-group {
+            margin: 25px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .btn-primary {
+            background: linear-gradient(90deg, var(--brand-red), #b30000);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1.05em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(210,0,0,0.25);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(210,0,0,0.35);
+        }
+        .btn-row {
+            display: flex;
+            gap: 12px;
+        }
+        .btn-secondary {
+            flex: 1;
+            background: linear-gradient(90deg, #0066ff, #0052cc);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,102,255,0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,102,255,0.35);
+        }
+
+        .search-bar { margin-bottom: 20px; }
+        .search-bar input { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--card-bg); }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        th, td { border-bottom: 1px solid var(--border-color); padding: 12px; text-align: left; }
+        th { background-color: rgba(0,0,0,0.03); }
+        tr:hover { background-color: rgba(210,0,0,0.05); }
+
+        .action-group { display: flex; gap: 6px; }
+        .action-btn {
+            background-color: var(--brand-red);
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+        .action-btn.delete { background-color: #d20000; }
+        .action-btn.audit { background-color: #0066ff; }
+
+        .note { font-style: italic; color: var(--text-muted); margin-bottom: 20px; font-size: 0.9em; padding: 12px; background-color: rgba(0,0,0,0.03); border-radius: 8px; }
+
+        footer {
+            text-align: center;
+            padding: 18px;
+            background-color: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="nav-left">
+        <div style="font-size: 1.2em; font-weight: bold;">Configuración de Reglas</div>
+        <button class="theme-toggle" id="theme-toggle" aria-label="Cambiar tema">🌙 Modo oscuro</button>
+    </div>
+    <div class="nav-links">
+        <a href="contabilizacion.html">Volver</a>
+        <a href="Mapa.html">Mpa del Sitio</a>
+    </div>
+</header>
+
+<div class="container">
+
+
+    <!-- DESCRIPCIÓN COLAPSABLE -->
+    <section class="page-description" id="page-description">
+        <div class="desc-header" id="desc-header">
+            <h2>Descripción de la Página (Especificación Funcional - Modelo Oficial)</h2>
+            <button class="toggle-btn" id="toggle-desc">▼</button>
+        </div>
+        <div id="description-content" class="desc-content">
+            <p>Esta página permite la configuración y gestión de reglas de negocio para la contabilización de guías en el sistema Aramark.<br><br>
+            
+            <strong>Tipos de regla disponibles:</strong><br>
+            • <strong>Tiempo</strong>: Se indica el número de horas desde la salida del CD.<br>
+            • <strong>Excepción</strong>: Intervalo de fechas (Inicio / Fin).<br>
+            • <strong>TiempoCD</strong>: Igual que Tiempo, pero aplica solo a un CD de origen específico.<br>
+            • <strong>ExcepciónCD</strong>: Igual que Excepción, pero aplica solo a un CD de origen específico.<br><br>
+            
+            Los campos <strong>Atributo</strong> y <strong>Agrupador</strong> son opcionales. Las reglas se pueden crear individualmente o cargar masivamente vía Excel. La tabla permite editar, eliminar y ver auditoría de cada registro.<br><br>
+            
+            <strong>INSTRUCCIÓN OBLIGATORIA PARA REPLICACIÓN (USAR COMO MODELO OFICIAL):</strong><br>
+            Esta página debe usarse como modelo oficial en TODOS los cambios y módulos que requieran replicar la estructura. Copiar EXACTAMENTE todo el HTML + CSS + JS (incluyendo tema oscuro/claro, descripción colapsable y comentarios). Esta es la referencia única y obligatoria para mantener consistencia en todo el sistema Aramark.
+            </p>
+        </div>
+    </section>
+
+    <!-- FORMULARIO ACTUALIZADO -->
+    <div class="panel">
+        <h3 class="panel-title">Crear Nueva Regla</h3>
+        <form id="create-form">
+            <select id="tipo-regla" required>
+                <option value="">Seleccione Tipo de Regla</option>
+                <option value="Tiempo">Tiempo</option>
+                <option value="Excepción">Excepción</option>
+                <option value="TiempoCD">TiempoCD</option>
+                <option value="ExcepciónCD">ExcepciónCD</option>
+            </select>
+
+            <!-- Campos originales -->
+            <div id="tiempo-fields" class="conditional-field">
+                <label>Horas desde salida del CD (0 = automático)</label>
+                <input type="number" id="horas" placeholder="Ej: 48" min="0">
+            </div>
+
+            <div id="excepcion-fields" class="conditional-field">
+                <label>Fecha Inicio</label>
+                <input type="date" id="fecha-inicio">
+                <label>Fecha Fin</label>
+                <input type="date" id="fecha-fin">
+            </div>
+
+            <!-- NUEVO CAMPO: CD de Origen (solo para TiempoCD y ExcepciónCD) -->
+            <div id="cd-origen-field" class="conditional-field" style="display:none;">
+                <label>CD de Origen (ej: CD-001)</label>
+                <input type="text" id="cd-origen" placeholder="CD-001" required>
+            </div>
+
+            <input type="text" id="atributo" placeholder="Atributo (opcional)">
+            <input type="text" id="agrupador" placeholder="Agrupador (opcional)">
+            <input type="text" id="contrato" placeholder="ID Contrato" required>
+
+            <button type="submit" class="btn-primary">Guardar Regla</button>
+        </form>
+    </div>
+
+    <!-- BOTONES EXCEL -->
+    <div class="button-group">
+        <div class="btn-row">
+            <button onclick="document.getElementById('excel-upload').click()" class="btn-secondary">
+                <i class="fas fa-file-excel"></i> Subir Excel (Masivo)
+            </button>
+            <button onclick="exportarExcel()" class="btn-secondary">
+                <i class="fas fa-file-excel"></i> Exportar Excel
+            </button>
+        </div>
+        <input type="file" id="excel-upload" accept=".xlsx,.xls" style="display:none;">
+    </div>
+
+    <p class="note">Definir reglas de negocio. Simulado vía webservice.</p>
+
+    <div class="search-bar">
+        <input type="text" id="search-input" placeholder="Buscar por tipo de regla o contrato...">
+    </div>
+
+    <div class="panel" style="overflow-x: auto;">
+        <h3 class="panel-title">Lista de Reglas</h3>
+        <table id="reglas-table">
+            <thead>
+                <tr>
+                    <th>Tipo de Regla</th>
+                    <th>Contrato</th>
+                    <th>Atributo</th>
+                    <th>Agrupador</th>
+                    <th>Detalle</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<footer>Prototipo Completo para Sistema Aramark © 2026</footer>
+
+<script>
+    let reglas = [
+        { tipo: "Tiempo", contrato: "CON-001", atributo: "Producción Alimentaria", agrupador: "Región Norte", detalle: "48 horas desde salida del CD", cdOrigen: "" },
+        { tipo: "Excepción", contrato: "CON-002", atributo: "", agrupador: "Región Central", detalle: "01/03/2026 → 31/03/2026", cdOrigen: "" },
+        { tipo: "Tiempo", contrato: "CON-003", atributo: "Distribución", agrupador: "", detalle: "0 horas (automático)", cdOrigen: "" },
+        // Ejemplos de los nuevos tipos
+        { tipo: "TiempoCD", contrato: "CON-004", atributo: "Producción", agrupador: "Región Norte", detalle: "24 horas desde salida del CD-001", cdOrigen: "CD-001" },
+        { tipo: "ExcepciónCD", contrato: "CON-005", atributo: "", agrupador: "Región Sur", detalle: "15/03/2026 → 30/04/2026 (CD-002)", cdOrigen: "CD-002" }
+    ];
+
+    // Toggle conditional fields (actualizado con nuevos tipos)
+    document.getElementById('tipo-regla').addEventListener('change', function() {
+        const tipo = this.value;
+        
+        // Campos de tiempo
+        document.getElementById('tiempo-fields').style.display = 
+            (tipo === 'Tiempo' || tipo === 'TiempoCD') ? 'block' : 'none';
+        
+        // Campos de excepción
+        document.getElementById('excepcion-fields').style.display = 
+            (tipo === 'Excepción' || tipo === 'ExcepciónCD') ? 'block' : 'none';
+        
+        // Campo CD de Origen (solo para los nuevos tipos)
+        document.getElementById('cd-origen-field').style.display = 
+            (tipo === 'TiempoCD' || tipo === 'ExcepciónCD') ? 'block' : 'none';
+    });
+
+    function renderTable(filter = '') {
+        const tbody = document.querySelector('#reglas-table tbody');
+        tbody.innerHTML = '';
+        const filtered = reglas.filter(r => 
+            r.tipo.toLowerCase().includes(filter.toLowerCase()) || 
+            r.contrato.toLowerCase().includes(filter.toLowerCase())
+        );
+        filtered.forEach(r => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${r.tipo}</td>
+                <td>${r.contrato}</td>
+                <td>${r.atributo || '—'}</td>
+                <td>${r.agrupador || '—'}</td>
+                <td>${r.detalle}</td>
+                <td>
+                    <div class="action-group">
+                        <button class="action-btn" onclick="editRegla('${r.contrato}')">Editar</button>
+                        <button class="action-btn delete" onclick="deleteRegla('${r.contrato}')">Eliminar</button>
+                        <button class="action-btn audit" onclick="auditoriaRegla('${r.contrato}')">Auditoría</button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    document.getElementById('create-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const tipo = document.getElementById('tipo-regla').value;
+        let detalle = '';
+        const cdOrigen = (tipo === 'TiempoCD' || tipo === 'ExcepciónCD') 
+                         ? document.getElementById('cd-origen').value.trim() 
+                         : '';
+
+        if (tipo === 'Tiempo' || tipo === 'TiempoCD') {
+            const horas = document.getElementById('horas').value || '0';
+            detalle = horas === '0' 
+                ? `Inmediato (0 horas)${cdOrigen ? ` (${cdOrigen})` : ''}` 
+                : `${horas} horas desde salida del CD${cdOrigen ? ` (${cdOrigen})` : ''}`;
+        } else if (tipo === 'Excepción' || tipo === 'ExcepciónCD') {
+            const inicio = document.getElementById('fecha-inicio').value || '—';
+            const fin = document.getElementById('fecha-fin').value || '—';
+            detalle = `${inicio} → ${fin}${cdOrigen ? ` (${cdOrigen})` : ''}`;
+        }
+
+        const newRegla = {
+            tipo: tipo,
+            contrato: document.getElementById('contrato').value,
+            atributo: document.getElementById('atributo').value || '',
+            agrupador: document.getElementById('agrupador').value || '',
+            detalle: detalle,
+            cdOrigen: cdOrigen
+        };
+        reglas.push(newRegla);
+        renderTable(document.getElementById('search-input').value);
+        e.target.reset();
+        showToast('✅ Regla guardada correctamente');
+    });
+
+    // SUBIDA EXCEL (sin cambios)
+    document.getElementById('excel-upload').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            alert(`📤 ${file.name} procesado (simulado)`);
+        }
+    });
+
+    window.exportarExcel = () => {
+        if (reglas.length === 0) return showToast('No hay datos para exportar');
+        const ws = XLSX.utils.json_to_sheet(reglas);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Reglas");
+        XLSX.writeFile(wb, 'Reglas_Aramark.xlsx');
+        showToast('📊 Excel descargado');
+    };
+
+    document.getElementById('search-input').addEventListener('input', (e) => renderTable(e.target.value));
+
+    function editRegla(contrato) { alert(`Editando regla para contrato ${contrato} (simulado)...`); }
+    function deleteRegla(contrato) {
+        if (confirm(`¿Eliminar regla para contrato ${contrato}?`)) {
+            reglas = reglas.filter(r => r.contrato !== contrato);
+            renderTable(document.getElementById('search-input').value);
+            showToast('🗑️ Regla eliminada');
+        }
+    }
+    function auditoriaRegla(contrato) {
+        alert(`AUDITORÍA DEL REGISTRO\n\nContrato: ${contrato}\nÚltima modificación: ${new Date().toLocaleString()}\nUsuario: Admin (simulado)`);
+    }
+
+    function showToast(msg) {
+        const toast = document.createElement('div');
+        toast.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#333;color:white;padding:12px 20px;border-radius:8px;opacity:0;transition:all 0.3s;z-index:9999;';
+        toast.textContent = msg;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.style.opacity = 1, 10);
+        setTimeout(() => { toast.style.opacity = 0; setTimeout(() => toast.remove(), 300); }, 3000);
+    }
+
+    window.onload = () => {
+        const user = localStorage.getItem('user');
+        const profile = localStorage.getItem('profile');
+        if (!user || !profile) { window.location.href = 'index.html'; return; }
+
+        const root = document.documentElement;
+        const themeToggle = document.getElementById('theme-toggle');
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        root.setAttribute('data-theme', savedTheme);
+        themeToggle.textContent = savedTheme === 'dark' ? '☀️ Modo claro' : '🌙 Modo oscuro';
+
+        themeToggle.addEventListener('click', () => {
+            const current = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            root.setAttribute('data-theme', current);
+            localStorage.setItem('theme', current);
+            themeToggle.textContent = current === 'dark' ? '☀️ Modo claro' : '🌙 Modo oscuro';
+        });
+
+        document.getElementById('desc-header').addEventListener('click', () => {
+            document.getElementById('page-description').classList.toggle('collapsed');
+        });
+
+        renderTable();
+    };
+</script>
+</body>
+</html>

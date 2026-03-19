@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoreo y Auditoría</title>
+    <!-- Librería Chart.js requerida para los gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Variables de marca referenciales y estilos generales */
+        :root {
+            --brand-red: #d20000;
+            --brand-dark: #333333;
+            --bg-color: #f4f7f6;
+            --border-color: #e0e0e0;
+            --active-bg: #ffebeb;
+        }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; padding: 0; 
+            background-color: var(--bg-color); 
+            color: var(--brand-dark); 
+        }
+        
+        /* Cabecera */
+        header { 
+            background-color: var(--brand-red); 
+            color: white; 
+            padding: 15px 30px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .nav-links a { color: white; text-decoration: none; margin-left: 20px; font-size: 0.9em; }
+        
+        .container { padding: 30px; max-width: 1200px; margin: auto; }
+        h2 { border-bottom: 3px solid var(--brand-red); padding-bottom: 10px; margin-top: 0; }
+        
+        /* Cuadrícula de KPIs Interactivos */
+        .kpi-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+            gap: 20px; 
+            margin-bottom: 25px; 
+        }
+        
+        /* Estilos de las Tarjetas */
+        .kpi-card { 
+            background: white; padding: 20px; border-radius: 8px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .kpi-card:hover { 
+            transform: translateY(-5px); 
+            border-color: var(--brand-red);
+            box-shadow: 0 6px 12px rgba(210,0,0,0.15);
+        }
+
+        .kpi-card h3 { margin: 0 0 10px 0; font-size: 0.85em; color: #666; text-transform: uppercase;}
+        .kpi-card .value { font-size: 2em; font-weight: bold; color: var(--brand-dark); }
+
+        /* Cuadrícula de Gráficos */
+        .charts-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+            gap: 20px; 
+            margin-bottom: 25px; 
+        }
+
+        /* Área de Gráfico */
+        .chart-section {
+            background: white; padding: 25px; border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+            border: 1px solid var(--border-color);
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .chart-container { position: relative; height: 300px; width: 100%; }
+        
+        /* Alertas y Tabla */
+        .grid-2-cols { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+        @media (max-width: 800px) { .grid-2-cols { grid-template-columns: 1fr; } }
+        
+        .panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid var(--border-color); }
+        .panel-title { margin-top: 0; font-size: 1.1em; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;}
+        
+        .alert-item { background: #fffafa; padding: 12px; border-left: 4px solid var(--brand-red); margin-bottom: 12px; border-radius: 4px; border: 1px solid #ffebeb; border-left-width: 4px; font-size: 0.9em;}
+        .btn { background-color: var(--brand-red); color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; margin-top: 8px; font-weight: bold;}
+        
+        table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        th, td { border-bottom: 1px solid var(--border-color); padding: 10px; text-align: left; }
+        th { background-color: #f8f9fa; color: #555; }
+
+        /* Form Styles */
+        form { display: flex; flex-direction: column; gap: 10px; }
+        input[type="text"], input[type="file"] { padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; }
+        button[type="submit"] { background-color: var(--brand-red); color: white; border: none; padding: 10px; cursor: pointer; border-radius: 4px; }
+        button[type="submit"]:hover { background-color: #b30000; }
+
+        /* Search Bar */
+        .search-bar { margin-bottom: 20px; }
+        .search-bar input { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; }
+
+        /* Note */
+        .note { font-style: italic; color: #6c757d; margin-bottom: 20px; font-size: 0.9em; }
+
+        /* Action Buttons */
+        .action-btn { background-color: var(--brand-red); color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; margin-right: 5px; }
+        .action-btn:hover { background-color: #b30000; }
+
+        /* Refresh Button */
+        .refresh-btn { background-color: var(--brand-red); color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; margin-top: 10px; }
+        .refresh-btn:hover { background-color: #b30000; }
+
+        .page-description {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div style="font-size: 1.2em; font-weight: bold;">Monitoreo y Auditoría</div>
+        <div class="nav-links"><a href="#">Mapa de Aplicaciones</a> <a href="contabilizacion.html">Volver</a></div>
+    </header>
+
+    <div class="container">
+   
+
+        <!-- Sección añadida para mostrar la descripción visible en la página -->
+        <section class="page-description">
+            <h2>Descripción de la Página</h2>
+            <p>Esta página proporciona capacidades de monitoreo y auditoría para el sistema de contabilización de guías en Aramark. Incluye KPIs como total de logs, errores, disponibilidad y guías procesadas; gráficos para la disponibilidad del sistema en los últimos 7 días y errores por tipo; alertas activas con opciones de resolución; y una lista de logs recientes con botón de refresco para trazabilidad. En el workflow, supervisa la captura constante de datos desde una vista de la Base de datos de Brand que muestra las guías despachadas desde el CD, la aplicación de reglas, y el procesamiento automático por BOT en Brand si se cumplen las reglas, con logs simulados de Application Insights para rastreo de ejecuciones de BOT y procesos.</p>
+        </section>
+
+        <!-- Fila 1: KPIs -->
+        <div class="kpi-grid">
+            <div class="kpi-card" id="card-total-logs">
+                <h3>Total Logs</h3>
+                <div class="value">0</div>
+            </div>
+            <div class="kpi-card" id="card-errores">
+                <h3>Errores</h3>
+                <div class="value">0</div>
+            </div>
+            <div class="kpi-card" id="card-disponibilidad">
+                <h3>Disponibilidad</h3>
+                <div class="value">0%</div>
+            </div>
+            <div class="kpi-card" id="card-procesadas">
+                <h3>Guías Procesadas</h3>
+                <div class="value">0</div>
+            </div>
+        </div>
+
+        <!-- Fila 2: Gráficos -->
+        <div class="charts-grid">
+            <div class="chart-section">
+                <h3 style="margin-top: 0; color: #d20000;">Disponibilidad del Sistema (Últimos 7 días)</h3>
+                <div class="chart-container">
+                    <canvas id="chartDisponibilidad"></canvas>
+                </div>
+            </div>
+            <div class="chart-section">
+                <h3 style="margin-top: 0; color: #d20000;">Errores por Tipo</h3>
+                <div class="chart-container">
+                    <canvas id="chartErrores"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fila 3: Alertas y Logs -->
+        <div class="grid-2-cols">
+            <div class="panel">
+                <h3 class="panel-title">Alertas Activas</h3>
+                <div class="alert-item">
+                    <strong>Alerta #1</strong><br>Error crítico en procesamiento.
+                    <br><button class="btn">Resolver</button>
+                </div>
+                <div class="alert-item">
+                    <strong>Alerta #2</strong><br>Baja disponibilidad detectada.
+                    <br><button class="btn">Resolver</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3 class="panel-title">Logs Recientes</h3>
+                <div id="logs-container" style="max-height: 300px; overflow-y: auto;"></div>
+                <button class="refresh-btn">Refrescar</button>
+            </div>
+        </div>
+
+        <p class="note">Simulación de logs Application Insights. Incluye trazabilidad de BOT y procesos.</p>
+    </div>
+
+    <footer>
+        Prototipo Completo para Sistema Aramark © 2026
+    </footer>
+
+    <!-- Script de Gestión y Gráficos -->
+    <script>
+        // Configuración inicial de Chart.js
+        Chart.defaults.font.family = "'Segoe UI', sans-serif";
+
+        // Datos simulados de logs
+        let logs = [
+            { timestamp: '2026-02-26 12:00', message: 'Ingesta: Nueva guía #006 procesada.' },
+            { timestamp: '2026-02-26 11:45', message: 'BOT: Recepción en Brand exitosa para #005.' },
+            { timestamp: '2026-02-26 11:30', message: 'Error: Excepción en validación - Reintento exitoso.' },
+            { timestamp: '2026-02-26 10:00', message: 'Sistema: Disponibilidad 99.9%.' }
+        ];
+
+        // Función para renderizar logs
+        function renderLogs() {
+            const container = document.getElementById('logs-container');
+            container.innerHTML = '';
+            logs.forEach(log => {
+                const div = document.createElement('div');
+                div.classList.add('alert-item'); // Usando estilo de alert-item para logs
+                div.innerHTML = `<strong>${log.timestamp}</strong><br>${log.message}`;
+                container.appendChild(div);
+            });
+        }
+
+        // Función para renderizar KPIs
+        function renderKPIs() {
+            const totalLogs = logs.length;
+            const errores = logs.filter(l => l.message.includes('Error')).length;
+            const disponibilidad = '99.9%'; // Simulado
+            const procesadas = logs.filter(l => l.message.includes('procesada')).length;
+
+            document.querySelector('#card-total-logs .value').textContent = totalLogs;
+            document.querySelector('#card-errores .value').textContent = errores;
+            document.querySelector('#card-disponibilidad .value').textContent = disponibilidad;
+            document.querySelector('#card-procesadas .value').textContent = procesadas;
+        }
+
+        // Función para renderizar gráficos
+        function renderCharts() {
+            // Gráfico de Disponibilidad (Line)
+            const ctxDisp = document.getElementById('chartDisponibilidad').getContext('2d');
+            new Chart(ctxDisp, {
+                type: 'line',
+                data: {
+                    labels: ['Día 1', 'Día 2', 'Día 3', 'Día 4', 'Día 5', 'Día 6', 'Día 7'],
+                    datasets: [{
+                        label: 'Disponibilidad (%)',
+                        data: [99.8, 99.9, 100, 99.7, 99.9, 100, 99.9],
+                        borderColor: '#28a745',
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: false, min: 99 } }
+                }
+            });
+
+            // Gráfico de Errores (Pie)
+            const ctxErr = document.getElementById('chartErrores').getContext('2d');
+            new Chart(ctxErr, {
+                type: 'pie',
+                data: {
+                    labels: ['Errores', 'Exitosos'],
+                    datasets: [{
+                        data: [1, 3], // Simulado basado en logs
+                        backgroundColor: ['#d20000', '#28a745'],
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: true } }
+                }
+            });
+        }
+
+        // Evento para refrescar
+        document.querySelector('.refresh-btn').addEventListener('click', () => {
+            // Simular nuevo log
+            const newLog = { timestamp: new Date().toISOString().slice(0, 19).replace('T', ' '), message: 'Nuevo log simulado.' };
+            logs.unshift(newLog); // Agregar al inicio
+            if (logs.length > 10) logs.pop(); // Mantener máximo 10
+            renderLogs();
+            renderKPIs();
+            alert('Logs actualizados (simulado)');
+        });
+
+        // Inicialización
+        window.onload = () => {
+            const user = localStorage.getItem('user');
+            const profile = localStorage.getItem('profile');
+            if (!user || !profile) {
+                window.location.href = 'index.html';
+            }
+            renderLogs();
+            renderKPIs();
+            renderCharts();
+        };
+    </script>
+</body>
+</html>
+

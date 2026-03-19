@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa del Sitio - Sistema Aramark</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <style>
+        :root {
+            --brand-red: #d20000;
+            --brand-dark: #333333;
+            --bg-color: #f4f7f6;
+            --border-color: #e0e0e0;
+            --card-bg: #ffffff;
+            --text-muted: #777777;
+        }
+        :root[data-theme="dark"] {
+            --brand-dark: #f4f7f6;
+            --bg-color: #1f1f1f;
+            --border-color: #444444;
+            --card-bg: #2a2a2a;
+            --text-muted: #aaaaaa;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; padding: 0;
+            background-color: var(--bg-color);
+            color: var(--brand-dark);
+        }
+        header {
+            background-color: var(--brand-red);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+        .container { padding: 40px 30px; max-width: 950px; margin: auto; margin-top: 90px; }
+
+        h1 { 
+            font-size: 2.4em; 
+            color: var(--brand-red); 
+            text-align: center; 
+            margin-bottom: 8px; 
+        }
+        .subtitle { 
+            text-align: center; 
+            color: var(--text-muted); 
+            font-size: 1.05em; 
+            margin-bottom: 40px; 
+        }
+
+        .sitemap-tree {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 35px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.07);
+            border: 1px solid var(--border-color);
+        }
+
+        details {
+            margin: 0;
+            padding: 0;
+        }
+        summary {
+            cursor: pointer;
+            padding: 10px 14px;
+            font-weight: 700;
+            font-size: 1.05em;
+            background: #ffebeb;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            list-style: none;
+            position: relative;
+        }
+        summary::-webkit-details-marker {
+            display: none;
+        }
+
+        /* Flecha custom sin numeración */
+        details[open] summary::after {
+            content: "▾";
+            position: absolute;
+            right: 10px;
+            font-size: 0.9em;
+        }
+        details:not([open]) summary::after {
+            content: "▸";
+            position: absolute;
+            right: 10px;
+            font-size: 0.9em;
+        }
+
+        /* LÍNEAS DEL ÁRBOL */
+        .tree-node {
+            position: relative;
+        }
+        .tree-node::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 14px;
+            width: 1px;
+            height: 100%;
+            background: #d0d0d0;
+        }
+        .tree-node > summary {
+            position: relative;
+        }
+
+        /* Niveles jerárquicos solo visuales */
+        .level-1 > summary {
+            margin-left: 0;
+            background: #ffebeb;
+            font-size: 1.15em;
+        }
+
+        .level-2 {
+            margin-left: 24px;
+        }
+        .level-2 > summary {
+            background: #fff0f0;
+            font-size: 1.05em;
+        }
+
+        .level-3 {
+            margin-left: 48px;
+        }
+        .level-3 > summary {
+            background: #fff8f8;
+            font-size: 1.0em;
+        }
+
+        /* Nivel 4: hojas */
+        .level-4-wrapper {
+            margin-left: 72px;
+            padding-left: 22px;
+            border-left: 2px solid #e0e0e0;
+            margin-top: 6px;
+        }
+        .tree-item {
+            display: flex;
+            align-items: center;
+            margin: 4px 0;
+            font-size: 0.95em;
+            position: relative;
+        }
+        .tree-item::before {
+            content: "";
+            width: 10px;
+            height: 1px;
+            background: #d0d0d0;
+            position: absolute;
+            left: -22px;
+        }
+
+        .tree-item a {
+            color: var(--brand-red);
+            text-decoration: none;
+        }
+        .tree-item a:hover { text-decoration: underline; }
+
+        .export-btn {
+            background-color: var(--brand-red);
+            color: white;
+            padding: 11px 22px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            float: right;
+            margin-bottom: 20px;
+        }
+        .export-btn:hover { background-color: #b30000; }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 12px;
+            margin-top: 60px;
+        }
+
+        .theme-toggle {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.6);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="nav-left" style="display:flex;align-items:center;gap:16px;">
+        <div style="font-size: 1.25em; font-weight: bold;">Mapa del Sitio</div>
+        <button class="theme-toggle" id="theme-toggle">🌙 Modo oscuro</button>
+    </div>
+</header>
+
+<div class="container">
+    <h1>Portal Centralizado</h1>
+    <p class="subtitle">Estructura jerárquica del Sistema Aramark</p>
+
+    <button class="export-btn" onclick="exportarExcel()">Exportar Mapa a Excel</button>
+
+    <div class="sitemap-tree">
+        <!-- Portal Centralizado -->
+        <details open class="tree-node level-1">
+            <summary><i class="fas fa-home"></i> Portal Centralizado</summary>
+
+            <!-- Operaciones Generales -->
+            <details open class="tree-node level-2">
+                <summary><i class="fas fa-cogs"></i> Operaciones Generales</summary>
+
+                <!-- Contabilización de Guías -->
+                <details open class="tree-node level-3">
+                    <summary><i class="fas fa-calculator"></i> Contabilización de Guías</summary>
+                    <div class="level-4-wrapper">
+                        <div class="tree-item">
+                            <a href="#"><i class="fas fa-list"></i> Guías Pendientes</a>
+                        </div>
+                        <div class="tree-item">
+                            <a href="#"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                        </div>
+                        <div class="tree-item">
+                            <a href="#"><i class="fas fa-eye"></i> Monitoreo</a>
+                        </div>
+                        <div class="tree-item">
+                            <a href="gestion-centros-costo.html"><i class="fas fa-building"></i> Centros de Costo</a>
+                        </div>
+                        <div class="tree-item">
+                            <a href="#"><i class="fas fa-sliders-h"></i> Configuración de Reglas</a>
+                        </div>
+                    </div>
+                </details>
+
+                <!-- Registro masivo de inventarios -->
+                <details open class="tree-node level-3">
+                    <summary><i class="fas fa-boxes"></i> Registro masivo de inventarios</summary>
+                    <div class="level-4-wrapper">
+                        <div class="tree-item">
+                            <a href="#"><i class="fas fa-hourglass-half"></i> Inventarios pendientes</a>
+                        </div>
+                        <div class="tree-item">
+                            <a href="#"><i class="fas fa-info-circle"></i> Detalle de registros</a>
+                        </div>
+                        <div class="tree-item">
+                            <a href="#"><i class="fas fa-eye"></i> Monitoreo</a>
+                        </div>
+                        <div class="tree-item">
+                            <a href="valores-objetivo.html"><i class="fas fa-bullseye"></i> Valores objetivo y umbrales</a>
+                        </div>
+                    </div>
+                </details>
+            </details>
+
+            <!-- Reportabilidad -->
+            <details open class="tree-node level-2">
+                <summary><i class="fas fa-chart-line"></i> Reportabilidad</summary>
+                <div class="level-4-wrapper">
+                    <div class="tree-item">
+                        <a href="#"><i class="fas fa-shopping-cart"></i> Pedidos</a>
+                    </div>
+                    <div class="tree-item">
+                        <a href="reportes-facturas.html"><i class="fas fa-file-invoice"></i> Facturas</a>
+                    </div>
+                    <div class="tree-item">
+                        <a href="#"><i class="fas fa-clipboard-list"></i> Toma de Inventario</a>
+                    </div>
+                </div>
+            </details>
+        </details>
+    </div>
+</div>
+
+<footer>Prototipo Completo para Sistema Aramark © 2026</footer>
+
+<div class="toast-container" aria-live="polite"></div>
+
+<script>
+window.addEventListener('load', () => {
+    const root = document.documentElement;
+    const themeToggle = document.getElementById('theme-toggle');
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    root.setAttribute('data-theme', savedTheme);
+    themeToggle.textContent = savedTheme === 'dark' ? '☀️ Modo claro' : '🌙 Modo oscuro';
+
+    themeToggle.addEventListener('click', () => {
+        const current = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', current);
+        localStorage.setItem('theme', current);
+        themeToggle.textContent = current === 'dark' ? '☀️ Modo claro' : '🌙 Modo oscuro';
+    });
+
+    window.exportarExcel = function() {
+        showToast('📊 Mapa exportado a Excel', 'success');
+    };
+
+    function showToast(msg) {
+        const container = document.createElement('div');
+        container.style.cssText = 'position:fixed;right:20px;bottom:20px;background:#28a745;color:white;padding:12px 16px;border-radius:4px;font-size:0.9em;';
+        container.textContent = msg;
+        document.body.appendChild(container);
+        setTimeout(() => container.remove(), 2800);
+    }
+});
+</script>
+</body>
+</html>

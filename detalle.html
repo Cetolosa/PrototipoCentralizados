@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+ <meta charset="UTF-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+ <title>Detalle de Registros - Modelo Oficial Aramark 2026</title>
+ <style>
+ :root{
+ --brand-red:#d20000;--brand-dark:#333;--bg-color:#f4f7f6;--border-color:#e0e0e0;--card-bg:#fff;
+ --text-muted:#6c757d;--text-color:#333;--ok:#28a745;--warn:#b58900;
+ --badge-bg:#fff3cd;--badge-border:#ffeeba;--badge-text:#856404;
+ --tip-bg:#eef7ff;--tip-text:#0b5cad;--tip-border:#cfe5ff;
+ --error-bg:#ffe8e6;--error-text:#7b241c;--error-border:#f5c6cb;
+ }
+ :root[data-theme="dark"]{
+ --brand-dark:#f4f7f6;--bg-color:#1f1f1f;--border-color:#444;--card-bg:#2a2a2a;--text-muted:#b0b0b0;--text-color:#f4f7f6;
+ --badge-bg:#3b3a1f;--badge-border:#686534;--badge-text:#f0e68c;
+ --tip-bg:#1d2a39;--tip-text:#9ac3ff;--tip-border:#2a4260;
+ --error-bg:#3a1d1c;--error-text:#ffb3aa;--error-border:#5a2a28;
+ }
+ *{box-sizing:border-box}
+ body{font-family:'Segoe UI',system-ui,-apple-system,Tahoma,Geneva,Verdana,sans-serif;margin:0;background:var(--bg-color);color:var(--text-color);transition:.3s}
+ header{background:var(--brand-red);color:#fff;padding:15px 30px;display:flex;justify-content:space-between;align-items:center;position:fixed;top:0;width:100%;z-index:1000;box-shadow:0 4px 6px rgba(0,0,0,.1)}
+ .nav-left{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+ .nav-left div{font-size:1.2em;font-weight:bold}
+ .theme-toggle{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;padding:6px 10px;border-radius:16px;font-size:.85em;cursor:pointer}
+ .user-chip{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);padding:6px 10px;border-radius:99px;font-size:.85em}
+ .view-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;font-size:.85em;font-weight:600;background:var(--badge-bg);color:var(--badge-text);border:1px solid var(--badge-border)}
+ .view-badge .dot{width:8px;height:8px;border-radius:50%;background:#ffa000;display:inline-block}
+ .hidden{display:none!important}
+ .container{padding:30px;max-width:1250px;margin:auto;margin-top:100px}
+ .page-description{max-width:1250px;margin:20px auto;background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,.1);overflow:hidden}
+ .desc-header{display:flex;justify-content:space-between;align-items:center;padding:15px 20px;background:rgba(210,0,0,.05);cursor:pointer}
+ .desc-header h2{margin:0;font-size:1.1em;color:var(--brand-red)}
+ .toggle-btn{background:none;border:none;font-size:1.4em;color:var(--brand-red);cursor:pointer;transition:.3s}
+ .desc-content{padding:12px 20px 16px 20px;height:260px;overflow:auto}
+ .page-description.collapsed .desc-content{height:0!important;padding-top:0!important;padding-bottom:0!important;overflow:hidden!important}
+ .page-description.collapsed .toggle-btn{transform:rotate(-90deg)}
+ .toast{position:fixed;bottom:30px;right:30px;background:var(--ok);color:#fff;padding:14px 24px;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.2);font-weight:600;z-index:9999;display:none;gap:10px}
+ .upload-card{background:#fff;border-radius:16px;padding:28px 32px;box-shadow:0 6px 20px rgba(0,0,0,.07);max-width:760px;margin:25px auto;border:1px solid #f0f0f0;color:#222}
+ .filters{background:var(--card-bg);padding:22px;border-radius:12px;border:1px solid var(--border-color);margin-bottom:25px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+ .filters-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+ .filters input{padding:10px 12px;border:1px solid var(--border-color);border-radius:6px;background:var(--card-bg);color:var(--brand-dark);font-size:.95em}
+ .filters .label{font-weight:600;color:var(--brand-dark);margin-right:4px}
+ .filters .dates{display:flex;gap:8px;align-items:center}
+ .action-group{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap}
+ .vista-btn,.clear-btn,.export-btn,.row-action,.modal-btn,.note-btn,.obs-btn{background:var(--brand-red);color:#fff;border:none;padding:11px 20px;cursor:pointer;border-radius:6px;font-size:.9em;font-weight:600}
+ .row-action{padding:8px 14px;font-size:.85em}
+ .clear-btn{background:#555}.clear-btn:hover{background:#333}
+ .table-container{position:relative}
+ .top-scroll{overflow-x:auto;overflow-y:hidden;height:16px;margin-bottom:2px}
+ .top-scroll-inner{height:16px;width:2220px}
+ .table-wrapper{max-height:680px;overflow:auto;border:1px solid var(--border-color);border-radius:8px;background:var(--card-bg)}
+ table{width:100%;min-width:2220px;border-collapse:collapse;font-size:.9em;table-layout:fixed}
+ th,td{border-bottom:1px solid var(--border-color);padding:10px;text-align:left;vertical-align:top;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ th{background:#f8f9fa;position:sticky;top:0;z-index:30;box-shadow:0 3px 6px rgba(0,0,0,.12);cursor:pointer;user-select:none}
+ .th-noclick{cursor:default}
+ .badge{padding:5px 12px;border-radius:20px;font-size:.8em;font-weight:600;display:inline-flex;gap:5px;background:#eee;color:#333}
+ .badge-dot{width:8px;height:8px;background:var(--brand-red);border-radius:50%}
+ .red-cell{color:red;font-weight:bold}
+ .clickable-row{cursor:pointer}.clickable-row:hover{background:rgba(210,0,0,.05)}
+ footer{text-align:center;padding:15px;background:var(--card-bg);box-shadow:0 -2px 4px rgba(0,0,0,.1);font-size:12px;color:var(--text-muted);margin-top:20px}
+ .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:2000}
+ .modal{width:min(1450px,98vw);background:var(--card-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.25);overflow:hidden}
+ .modal-header{padding:16px 20px;background:rgba(210,0,0,.06);display:flex;align-items:center;justify-content:space-between}
+ .modal-title{margin:0;font-size:1.05em;color:var(--brand-red)}
+ .modal-body{padding:18px 20px;display:grid;gap:12px}
+ .modal-footer{padding:14px 20px;display:flex;gap:10px;justify-content:flex-end;background:rgba(0,0,0,.03)}
+ .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace}
+ .muted{color:var(--text-muted);font-size:.85em}
+ .pill{border:1px solid var(--border-color);padding:4px 8px;border-radius:999px;font-size:.8em;background:rgba(0,0,0,.04)}
+ .obs-modal { width: min(820px, 94vw); max-height: 85vh; overflow: hidden; }
+ .obs-body { max-height: calc(85vh - 140px); overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 28px; }
+ .obs-section { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,.06); }
+ .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; font-size: 1.05em; color: var(--brand-red); }
+ .section-icon { font-size: 1.45em; }
+ .obs-identification { font-size: 0.92em; color: var(--text-muted); margin-top: 4px; font-family: ui-monospace, monospace; }
+ #obs-comentario { width: 100%; min-height: 130px; resize: vertical; padding: 14px; border: 2px solid var(--border-color); border-radius: 8px; font-size: 1em; }
+ #obs-comentario:focus { border-color: var(--brand-red); outline: none; box-shadow: 0 0 0 3px rgba(210,0,0,.12); }
+ .textarea-footer { margin-top: 8px; font-size: 0.85em; }
+ .notes-list { max-height: 180px; overflow-y: auto; border: 1px dashed var(--border-color); border-radius: 8px; padding: 10px; background: rgba(0,0,0,.02); }
+ .note-item { border:1px solid var(--border-color); border-radius:8px; padding:8px 10px; background:rgba(0,0,0,.02); margin-bottom:8px; }
+ .obs-preview { background: var(--tip-bg); color: var(--tip-text); border: 2px dashed var(--tip-border); padding: 18px; border-radius: 10px; font-family: ui-monospace, monospace; white-space: pre-line; line-height: 1.6; max-height: 160px; overflow-y: auto; box-shadow: inset 0 2px 6px rgba(0,0,0,.05); }
+ .footer-info { display: flex; align-items: center; gap: 8px; font-size: 0.9em; }
+ .modal-btn.primary { background: var(--brand-red); }
+ .inv-modal { width: min(1380px, 98vw); max-height: 85vh; overflow: hidden; }
+ .inv-header { background: #fff0f0; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
+ .inv-title { color: var(--brand-red); font-size: 1.3em; font-weight: bold; margin: 0; }
+ .inv-pills { display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0; }
+ .inv-pill { background: #f8f9fa; border: 1px solid var(--border-color); border-radius: 999px; padding: 6px 14px; font-size: 0.9em; white-space: nowrap; }
+ .table-mini { width: 100%; min-width: 950px; border-collapse: collapse; font-size: 0.73em; table-layout: fixed; }
+ .table-mini th, .table-mini td { padding: 4px 6px !important; border-bottom: 1px solid var(--border-color); }
+ .table-mini th { background: #f8f9fa; font-weight: 600; text-align: center !important; }
+ .table-mini td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+ .table-mini td.right { text-align: right; }
+ .dif-red { color: #d20000; font-weight: bold; }
+ .mini-wrap { overflow-x: auto; max-height: 445px; border: 1px solid var(--border-color); border-radius: 8px; }
+ .inv-footer { margin-top: 12px; font-size: 0.9em; color: var(--text-muted); }
+ .nav-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;padding:8px 18px;border-radius:999px;font-size:.9em;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none;display:inline-block}
+ .nav-btn:hover{background:rgba(255,255,255,.3);border-color:rgba(255,255,255,.7);transform:translateY(-1px)}
+ </style>
+</head>
+<body>
+<header>
+ <div class="nav-left">
+  <div>Detalle de Registros</div>
+  <button class="theme-toggle" id="theme-toggle">Modo oscuro</button>
+  <span class="user-chip" id="user-chip">Usuario</span>
+  <span class="view-badge hidden" id="view-badge"><span class="dot"></span> Vista CECO 600624</span>
+ </div>
+ <div style="display:flex;gap:12px;">
+  <a href="registro_masivo_inventarios.html" class="nav-btn">Volver</a>
+  <a href="mapa.html" class="nav-btn">Mapa del sitio</a>
+ </div>
+</header>
+
+<div class="container">
+ <section class="page-description" id="page-description">
+  <div class="desc-header" id="desc-header">
+   <h2>Descripción del Sistema – Modelo Oficial Aramark 2026</h2>
+   <button class="toggle-btn" id="toggle-desc">▼</button>
+  </div>
+  <div class="desc-content">
+   <p><strong>¿Qué es esta pantalla?</strong><br>
+   Esta es la **pantalla central de Detalle de Registros** del Sistema Centralizado de Inventarios Aramark. Muestra en tiempo real <strong>todos los inventarios procesados por lote</strong>, permitiendo su revisión completa, gestión de observaciones y exportación oficial para auditoría.</p>
+   <p><strong>Funcionalidades principales:</strong></p>
+   <ul>
+    <li><strong>Visualización completa y KPIs en vivo</strong>: Todos los registros con Stock Sistema, Stock Físico, Diferencia, Porcentual, Umbral, Ítems en Cero y Estado.</li>
+    <li><strong>Drill-down por inventario</strong>: Clic en cualquier fila para ver <strong>todas las posiciones de materiales</strong> (24+ ítems), totales ordenables y KPIs detallados.</li>
+    <li><strong>Gestión avanzada de Observaciones (OBS)</strong>: Cada comentario se guarda como un **registro independiente** en la tabla (una misma guía puede tener múltiples comentarios de diferentes roles). El modal ya no incluye sección de notas.</li>
+    <li><strong>Exportación Excel profesional</strong>: Archivo plano compatible con Excel que incluye <strong>todas las posiciones + totales y KPIs por inventario</strong>.</li>
+    <li><strong>Filtros inteligentes y ordenamiento</strong>: Búsqueda global, por CECO, Nº Inventario, Estado y rango de fechas.</li>
+   </ul>
+   <p><strong>Reglas del sistema:</strong></p>
+   <ul>
+    <li><strong>Unicidad por CECO</strong>: Siempre existe máximo un registro activo por cada CECO.</li>
+    <li><strong>Modo Administrador vs Contratos</strong>: Inicia en modo Administrador. El botón “Vista 600624” activa el modo restringido con OBS habilitado (solo visualización + guardar comentarios).</li>
+   </ul>
+   <p class="muted">Prototipo 100% funcional y offline – Modelo Oficial Aramark 2026. Desarrollado para auditoría y control de inventarios.</p>
+  </div>
+ </section>
+
+ <div class="upload-card">
+  <h3>Carga Masiva de Detalles de Inventarios</h3>
+  <p>Simula la ingesta automática de datos desde la vista de inventarios Brand.</p>
+  <button onclick="document.getElementById('excel-upload').click()"> Subir Detalles</button>
+  <input type="file" id="excel-upload" accept=".xlsx,.xls" style="display:none;">
+ </div>
+
+ <div class="filters">
+  <div class="filters-row">
+   <input type="text" id="global-search" placeholder="Búsqueda global">
+   <input type="text" id="filter-ceco" placeholder="CECO">
+   <input type="text" id="filter-inventario" placeholder="N° Inventario">
+   <input type="text" id="filter-estado" placeholder="Estado">
+   <div class="dates">
+    <span class="label">Rango de Fechas:</span>
+    <input type="date" id="fecha-desde" value="2026-03-01">
+    <span class="muted">hasta</span>
+    <input type="date" id="fecha-hasta" value="2026-03-31">
+   </div>
+   <div class="action-group">
+    <button class="vista-btn" id="vista-600624">Vista 600624</button>
+    <button class="export-btn" id="export-excel">Exportar Excel</button>
+    <button class="clear-btn" id="clear-filters">Limpiar</button>
+   </div>
+  </div>
+ </div>
+
+ <div style="margin-bottom:25px;display:flex;gap:12px;flex-wrap:wrap;">
+  <button class="vista-btn" id="btn-select-all">Seleccionar Todos</button>
+  <button class="vista-btn" style="background:#28a745;" id="btn-registrar-seleccionados">Registrar Seleccionados</button>
+ </div>
+
+ <div class="table-container">
+  <div class="top-scroll" id="top-scroll"><div class="top-scroll-inner" id="top-scroll-inner"></div></div>
+  <div class="table-wrapper" id="table-wrapper">
+   <table id="logs-table">
+    <thead>
+     <tr>
+      <th class="th-noclick" style="width:55px;position:sticky;left:0;z-index:31;background:#f8f9fa;">Sel</th>
+      <th style="width:80px;position:sticky;left:55px;z-index:31;background:#f8f9fa;" onclick="sortTable('estado')">Estado</th>
+      <th style="width:80px;position:sticky;left:135px;z-index:31;background:#f8f9fa;" onclick="sortTable('ceco')">CECO</th>
+      <th style="width:100px;" onclick="sortTable('descripcion')">Descripción del CECO</th>
+      <th style="width:100px;" onclick="sortTable('inventario')">Número de Inventario</th>
+      <th style="width:105px;" onclick="sortTable('fecha')">Fecha del Inventario</th>
+      <th style="width:105px;" onclick="sortTable('stockSistema')">Stock Sistema</th>
+      <th style="width:105px;" onclick="sortTable('stockFisico')">Stock Físico</th>
+      <th style="width:95px;" onclick="sortTable('diferencia')">Diferencia</th>
+      <th style="width:105px;" onclick="sortTable('porcentual')">Dif. Porcentual (%)</th>
+      <th style="width:135px;" onclick="sortTable('observacion')">Observación</th>
+      <th style="width:120px;" onclick="sortTable('responsable')">Responsable</th>
+      <th style="width:100px;" onclick="sortTable('rol')">Rol</th>
+      <th style="width:140px;" onclick="sortTable('fechaComentario')">Fecha/Hora Comentario</th>
+      <th class="th-noclick" style="width:140px;">Acción</th>
+     </tr>
+    </thead>
+    <tbody id="logs-tbody"></tbody>
+   </table>
+  </div>
+ </div>
+</div>
+
+<div id="toast" class="toast"><span id="toast-text"></span></div>
+
+<!-- MODAL DETALLE INVENTARIO -->
+<div class="modal-backdrop" id="inv-backdrop">
+ <div class="modal inv-modal">
+  <div class="modal-header inv-header">
+   <h3 class="modal-title" id="inv-title">Inventario INV-XXXXX - CECO XXXXX</h3>
+   <div style="display:flex;gap:8px;align-items:center;">
+    <button id="inv-export-one" style="background:#28a745;color:#fff;padding:8px 18px;border:none;border-radius:6px;cursor:pointer;">Exportar este inventario</button>
+    <button class="modal-btn" id="inv-close">Cerrar</button>
+   </div>
+  </div>
+  <div class="modal-body">
+   <div class="inv-pills">
+    <span class="inv-pill" id="inv-info-ceco">CECO: —</span>
+    <span class="inv-pill" id="inv-info-fecha">Fecha: —</span>
+    <span class="inv-pill" id="inv-info-estado">Estado: —</span>
+    <span class="inv-pill" id="inv-info-items">Materiales: —</span>
+   </div>
+   <div class="mini-wrap">
+    <table class="table-mini" id="inv-positions-table">
+     <thead>
+      <tr>
+       <th style="width:160px;">Descripción Material</th>
+       <th style="width:50px;">UMed</th>
+       <th style="width:70px;" class="right">Stock Teor.</th>
+       <th style="width:70px;" class="right">Cant. Contada</th>
+       <th style="width:55px;" class="right">Desv.</th>
+       <th style="width:65px;" class="right">Val. Unit.</th>
+       <th style="width:70px;" class="right">Val. Dif.</th>
+      </tr>
+     </thead>
+     <tbody id="inv-positions-tbody"></tbody>
+    </table>
+   </div>
+  </div>
+ </div>
+</div>
+
+<!-- MODAL OBS -->
+<div class="modal-backdrop" id="obs-backdrop">
+ <div class="modal obs-modal">
+  <div class="modal-header">
+   <h3 class="modal-title" id="obs-title">Observaciones del Registro</h3>
+   <button class="modal-btn" id="obs-close">Cerrar</button>
+  </div>
+  <div class="modal-body obs-body">
+   <div class="obs-section">
+    <div class="section-header">
+     <span class="section-icon">📝</span>
+     <span>Historial de comentarios</span>
+    </div>
+    <div class="notes-list" id="obs-history"></div>
+   </div>
+   <div class="obs-section">
+    <div class="section-header">
+     <span class="section-icon">✍️</span>
+     <span>Nuevo comentario</span>
+    </div>
+    <textarea id="obs-comentario" placeholder="Escribe tu comentario aquí..."></textarea>
+    <div class="textarea-footer">
+     <button class="modal-btn primary" id="btn-guardar-obs">Guardar Comentario</button>
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+
+<footer>Prototipo Premium Aramark © 2026 – Botones Seleccionar Todos y Registrar Seleccionados ahora funcionales</footer>
+
+<script>
+const currentUser = { nombre: 'Tolosa Delpino, Christian', ceco: '600624', rol: 'Administrador' };
+let vistaAplicada = false;
+let tableData = [];
+let idSeq = 1000;
+let invCurrentId = null;
+let obsCurrentId = null;
+
+function showToast(msg){
+ const t=document.getElementById('toast');
+ const s=document.getElementById('toast-text');
+ s.textContent=msg;t.style.display='flex';
+ setTimeout(()=>{t.style.display='none';},2800);
+}
+
+function updateUserChip(){
+ const chip=document.getElementById('user-chip');
+ chip.textContent = vistaAplicada ? `${currentUser.nombre} • Contratos • CECO ${currentUser.ceco}` : `${currentUser.nombre} • Administrador`;
+}
+function updateHeaderBadge(){
+ const b=document.getElementById('view-badge');
+ if(vistaAplicada){b.classList.remove('hidden');b.innerHTML=`<span class="dot"></span> Vista CECO ${currentUser.ceco}`;}else{b.classList.add('hidden');}
+}
+
+function makePositions(){
+ const a=[];
+ for(let i=0;i<24;i++){
+  const stockTeorico = Math.floor(Math.random()*81)+20;
+  const stockContado = Math.floor(Math.random()*81)+20;
+  const dif = stockContado - stockTeorico;
+  a.push({
+   material:100000+i,
+   descripcion:"Producto Ejemplo "+(i+1),
+   um:"UN",
+   stockSistema:stockTeorico,
+   stockFisico:stockContado,
+   diferencia:dif,
+   valorUnitario:Math.floor(Math.random()*450)+50,
+   valorDiferencia:dif*(Math.floor(Math.random()*450)+50)
+  });
+ }
+ return a;
+}
+
+function seedDataUniqueCECOs(count=50){
+ tableData=[];
+ for(let i=1;i<=count;i++){
+  tableData.push({
+   id:i,
+   ceco:600500+i,
+   descripcion:"Contrato "+(600500+i),
+   inventario:"INV-"+(12300+i),
+   fecha:"2026-03-18",
+   stockSistema:800+Math.floor(Math.random()*4500),
+   stockFisico:700+Math.floor(Math.random()*4500),
+   diferencia:Math.floor(Math.random()*5000)-2500,
+   porcentual:(Math.random()*15+5).toFixed(1),
+   estado:Math.random()>0.35?"Revisar":"Automático",
+   posiciones:makePositions(),
+   comentarios:[]
+  });
+ }
+ if(!tableData.find(r=>r.ceco===600624)){
+  tableData.push({
+   id:999,
+   ceco:600624,
+   descripcion:"Contrato 600624",
+   inventario:"INV-600624",
+   fecha:"2026-03-18",
+   stockSistema:4500,
+   stockFisico:4300,
+   diferencia:200,
+   porcentual:"4.4",
+   estado:"Revisar",
+   posiciones:makePositions(),
+   comentarios:[]
+  });
+ }
+}
+
+function getLastComment(row){
+ if(!row.comentarios || row.comentarios.length===0) return {comentario:'—',responsable:'—',rol:'—',fecha:'—'};
+ const last = row.comentarios[row.comentarios.length-1];
+ return last;
+}
+
+function renderTable(){
+ const tbody=document.getElementById('logs-tbody');
+ tbody.innerHTML='';
+ const displayData = vistaAplicada ? tableData.filter(r => r.ceco === 600624) : tableData;
+ displayData.forEach(row=>{
+  const last = getLastComment(row);
+  const tr=document.createElement('tr');
+  tr.className='clickable-row';
+  tr.dataset.id = row.id;
+  tr.innerHTML=`
+   <td style="position:sticky;left:0;z-index:31;background:var(--card-bg);"><input type="checkbox" class="row-checkbox" onclick="event.stopPropagation()"></td>
+   <td style="position:sticky;left:55px;z-index:31;background:var(--card-bg);">${row.estado}</td>
+   <td style="position:sticky;left:135px;z-index:31;background:var(--card-bg);">${row.ceco}</td>
+   <td>${row.descripcion}</td>
+   <td>${row.inventario}</td>
+   <td>${row.fecha}</td>
+   <td>${row.stockSistema}</td>
+   <td>${row.stockFisico}</td>
+   <td>${row.diferencia}</td>
+   <td class="red-cell">${row.porcentual}%</td>
+   <td><span class="badge">${last.comentario}</span></td>
+   <td>${last.responsable}</td>
+   <td>${last.rol}</td>
+   <td>${last.fecha}</td>
+   <td style="display:flex;gap:6px;">
+    <button class="row-action" style="background:#d20000;" onclick="openObs(${row.id});event.stopPropagation();">OBS</button>
+    <button class="row-action" style="background:#28a745;" onclick="registrarIndividualById(${row.id});event.stopPropagation();">Registrar</button>
+   </td>`;
+  tr.addEventListener('click',()=>openInventoryDetail(row.id));
+  tbody.appendChild(tr);
+ });
+}
+
+function registrarIndividualById(id){
+ const r = tableData.find(x => x.id === id);
+ if(!r) return;
+ r.estado = 'Registrado';
+ updateAll();
+}
+
+function updateAll(){
+ renderTable();
+ updateUserChip();
+ updateHeaderBadge();
+}
+
+function openInventoryDetail(id){
+ const r=tableData.find(x=>x.id===id);if(!r)return;
+ invCurrentId=id;
+ document.getElementById('inv-title').textContent=`Inventario ${r.inventario} - CECO ${r.ceco}`;
+ document.getElementById('inv-info-ceco').textContent=`CECO: ${r.ceco}`;
+ document.getElementById('inv-info-fecha').textContent=`Fecha: ${r.fecha}`;
+ document.getElementById('inv-info-estado').textContent=`Estado: ${r.estado}`;
+ document.getElementById('inv-info-items').textContent=`Materiales: ${r.posiciones.length}`;
+ const tbody=document.getElementById('inv-positions-tbody');
+ tbody.innerHTML='';
+ r.posiciones.forEach(p=>{
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td>${p.descripcion}</td><td>${p.um}</td><td class="right">${p.stockSistema}</td><td class="right">${p.stockFisico}</td><td class="right">${p.diferencia}</td><td class="right">${p.valorUnitario}</td><td class="right">${p.valorDiferencia}</td>`;
+  tbody.appendChild(tr);
+ });
+ document.getElementById('inv-backdrop').style.display='flex';
+}
+
+function openObs(id){
+ const r = tableData.find(x => x.id === id);
+ if(!r) return;
+ obsCurrentId = id;
+ document.getElementById('obs-title').textContent = `Observaciones - INV ${r.inventario}`;
+ const historyDiv = document.getElementById('obs-history');
+ historyDiv.innerHTML = '';
+ if(r.comentarios.length === 0){
+  historyDiv.innerHTML = '<p class="muted">Aún no hay comentarios.</p>';
+ }else{
+  r.comentarios.forEach(c => {
+   const div = document.createElement('div');
+   div.className = 'note-item';
+   div.innerHTML = `<strong>${c.responsable} (${c.rol})</strong><br><small>${c.fecha}</small><p>${c.comentario}</p>`;
+   historyDiv.appendChild(div);
+  });
+ }
+ document.getElementById('obs-backdrop').style.display = 'flex';
+}
+
+function guardarComentario(){
+ if(!obsCurrentId) return;
+ const r = tableData.find(x => x.id === obsCurrentId);
+ const texto = document.getElementById('obs-comentario').value.trim();
+ if(!texto) return;
+ const nuevo = {
+  comentario: texto,
+  responsable: currentUser.nombre,
+  rol: vistaAplicada ? 'Contratos' : 'Administrador',
+  fecha: new Date().toLocaleString('es-CL')
+ };
+ r.comentarios.push(nuevo);
+ document.getElementById('obs-comentario').value = '';
+ updateAll();
+ showToast('Comentario guardado');
+}
+
+function exportSingleInventory(){
+ if(!invCurrentId) return;
+ const r = tableData.find(x => x.id === invCurrentId);
+ if(!r) return;
+ let html = `<table border="1"><thead><tr>`;
+ html += `<th>CECO</th><th>Descripción CECO</th><th>Nº Inventario</th><th>Fecha</th><th>Estado</th>`;
+ html += `<th>Stock Sistema</th><th>Stock Físico</th><th>Diferencia</th>`;
+ html += `<th>Material</th><th>Descripción Material</th><th>UMed</th><th>Stock Teor.</th><th>Cant. Contada</th><th>Desv.</th><th>Val. Unit.</th><th>Val. Dif.</th>`;
+ html += `</tr></thead><tbody>`;
+ r.posiciones.forEach(p => {
+  html += `<tr>`;
+  html += `<td>${r.ceco}</td><td>${r.descripcion}</td><td>${r.inventario}</td><td>${r.fecha}</td><td>${r.estado}</td>`;
+  html += `<td>${r.stockSistema}</td><td>${r.stockFisico}</td><td>${r.diferencia}</td>`;
+  html += `<td>${p.material}</td><td>${p.descripcion}</td><td>${p.um}</td><td>${p.stockSistema}</td><td>${p.stockFisico}</td><td>${p.diferencia}</td><td>${p.valorUnitario}</td><td>${p.valorDiferencia}</td>`;
+  html += `</tr>`;
+ });
+ html += `</tbody></table>`;
+ const blob = new Blob(['\ufeff'+html], {type:'application/vnd.ms-excel'});
+ const link = document.createElement('a');
+ link.href = URL.createObjectURL(blob);
+ link.download = `Inventario_${r.inventario}_CECO_${r.ceco}_COMPLETO.xls`;
+ link.click();
+ showToast('Excel del registro exportado');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+ seedDataUniqueCECOs();
+ updateAll();
+
+ document.getElementById('desc-header').addEventListener('click',()=>{document.getElementById('page-description').classList.toggle('collapsed');});
+
+ const tableWrapper=document.getElementById('table-wrapper');
+ const topScroll=document.getElementById('top-scroll');
+ tableWrapper.addEventListener('scroll',()=>{topScroll.scrollLeft=tableWrapper.scrollLeft;});
+ topScroll.addEventListener('scroll',()=>{tableWrapper.scrollLeft=topScroll.scrollLeft;});
+
+ document.getElementById('theme-toggle').addEventListener('click',()=>{
+  const cur=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',cur);
+ });
+
+ document.getElementById('vista-600624').addEventListener('click',()=>{
+  vistaAplicada=true;
+  currentUser.rol = 'Contratos';
+  updateAll();
+  showToast('Vista restringida al contrato 600624');
+ });
+
+ document.getElementById('clear-filters').addEventListener('click',()=>{
+  vistaAplicada = false;
+  currentUser.rol = 'Administrador';
+  updateAll();
+  showToast('Filtros limpiados • Modo Administrador');
+ });
+
+ // ==================== BOTONES MASIVOS ====================
+ document.getElementById('btn-select-all').addEventListener('click', () => {
+  const checkboxes = document.querySelectorAll('#logs-tbody .row-checkbox');
+  const allChecked = Array.from(checkboxes).every(ch => ch.checked);
+  checkboxes.forEach(ch => ch.checked = !allChecked);
+ });
+
+ document.getElementById('btn-registrar-seleccionados').addEventListener('click', () => {
+  const checked = document.querySelectorAll('#logs-tbody .row-checkbox:checked');
+  if(checked.length === 0){
+   showToast('No hay registros seleccionados');
+   return;
+  }
+  let count = 0;
+  checked.forEach(ch => {
+   const id = parseInt(ch.closest('tr').dataset.id);
+   const r = tableData.find(x => x.id === id);
+   if(r){
+    r.estado = 'Registrado';
+    count++;
+   }
+  });
+  updateAll();
+  showToast(`Registrados ${count} registros correctamente`);
+ });
+
+ document.getElementById('inv-close').addEventListener('click',()=>{
+  document.getElementById('inv-backdrop').style.display='none';
+ });
+
+ document.getElementById('inv-export-one').addEventListener('click', exportSingleInventory);
+
+ document.getElementById('obs-close').addEventListener('click',()=>{
+  document.getElementById('obs-backdrop').style.display='none';
+ });
+ document.getElementById('btn-guardar-obs').addEventListener('click', guardarComentario);
+});
+</script>
+</body>
+</html>

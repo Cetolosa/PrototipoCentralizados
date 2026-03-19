@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventarios APP pendientes</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <style>
+        :root {
+            --brand-red: #d20000;
+            --brand-dark: #333333;
+            --bg-color: #f4f7f6;
+            --border-color: #e0e0e0;
+            --card-bg: #ffffff;
+            --text-muted: #6c757d;
+            --text-color: #333333;
+        }
+        :root[data-theme="dark"] {
+            --brand-dark: #f4f7f6;
+            --bg-color: #1f1f1f;
+            --border-color: #444444;
+            --card-bg: #2a2a2a;
+            --text-muted: #b0b0b0;
+            --text-color: #f4f7f6;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s ease, color 0.3s ease;
+            font-size: 14px;
+        }
+        header {
+            background-color: var(--brand-red);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+        .nav-left { display: flex; align-items: center; gap: 15px; }
+        .nav-left div { font-size: 1.2em; font-weight: bold; }
+        .theme-toggle {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.4);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 16px;
+            font-size: 0.85em;
+            cursor: pointer;
+        }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 0.9em;
+        }
+
+        .container { padding: 30px; max-width: 1200px; margin: auto; margin-top: 100px; }
+        h2 { border-bottom: 3px solid var(--brand-red); padding-bottom: 10px; margin-top: 0; }
+
+        .page-description {
+            max-width: 1200px;
+            margin: 25px auto;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        .desc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px;
+            background-color: rgba(210,0,0,0.05);
+            cursor: pointer;
+        }
+        .desc-header h2 { margin: 0; font-size: 1.1em; color: var(--brand-red); }
+        .toggle-btn {
+            background: none;
+            border: none;
+            font-size: 1.4em;
+            color: var(--brand-red);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .desc-content {
+            padding: 0 25px 25px 25px;
+            max-height: 400px;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+        .page-description.collapsed .desc-content {
+            max-height: 0;
+            padding-bottom: 0;
+        }
+        .page-description.collapsed .toggle-btn {
+            transform: rotate(-90deg);
+        }
+
+        .note { font-style: italic; color: #6c757d; margin-bottom: 20px; font-size: 0.9em; padding: 10px; background-color: #f8f9fa; border-radius: 4px; }
+
+        form { display: flex; flex-direction: column; gap: 10px; }
+        input[type="text"], input[type="file"], input[type="date"] { padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; }
+        button[type="submit"] { background-color: var(--brand-red); color: white; border: none; padding: 10px; cursor: pointer; border-radius: 4px; }
+        button[type="submit"]:hover { background-color: #b30000; }
+
+        .search-bar { margin-bottom: 20px; }
+        .search-bar input { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; }
+
+        .panel { background: var(--card-bg); padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid var(--border-color); }
+        .panel-title { margin-top: 0; font-size: 1.1em; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+
+        .table-wrapper {
+            max-height: 520px;
+            overflow-y: auto;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+            table-layout: fixed;
+        }
+        th, td {
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 10px;
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        th {
+            background-color: #f8f9fa;
+            color: #555;
+            cursor: pointer;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        th input {
+            width: 100%;
+            padding: 4px;
+            border: none;
+            background: transparent;
+            font-size: 0.85em;
+        }
+
+        .estado-pendiente { color: green; font-weight: bold; }
+        .action-btn {
+            background-color: var(--brand-red);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-right: 5px;
+        }
+        .action-btn:hover { background-color: #b30000; }
+
+        .status-filter {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+        .status-filter label { display: flex; align-items: center; gap: 5px; }
+
+        footer {
+            text-align: center;
+            padding: 15px;
+            background-color: #fff;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+            font-size: 12px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="nav-left">
+        <div style="font-size: 1.2em; font-weight: bold;">Inventarios APP pendientes</div>
+        <button class="theme-toggle" id="theme-toggle" aria-label="Cambiar tema">🌙 Modo oscuro</button>
+    </div>
+    <div class="nav-links">
+        <a href="registro_masivo_inventarios.html">Volver</a>
+        <a href="Mapa.html">Mapa del Sitio</a>
+    </div>
+</header>
+
+<div class="container">
+
+    <!-- DESCRIPCIÓN COLAPSABLE -->
+    <section class="page-description" id="page-description">
+        <div class="desc-header" id="desc-header">
+            <h2>Descripción de la Página (Especificación Funcional - Modelo Oficial)</h2>
+            <button class="toggle-btn" id="toggle-desc">▼</button>
+        </div>
+        <div class="desc-content">
+            <p>Esta página gestiona los inventarios APP pendientes en el sistema Aramark. Incluye formularios para registrar nuevos inventarios individualmente o cargar masivamente vía Excel; una tabla interactiva con filtros por columna, búsqueda global, ordenamiento, selección múltiple, acciones para procesar inventarios, y un filtro para ocultar estados específicos. Las columnas incluyen número, CECO, fecha, estado, fecha de procesamiento, planilla creada, número de inventario (generado cuando la planilla está creada), y detalle obtenido. Con el CECO y la planilla APP, un BOT convierte a planilla de inventario, genera un número de inventario, lista diferencias y las guarda para análisis posterior en contratos centralizados.<br><br>
+            
+            <strong>El rol de Contratos sólo podrá ingresar CECO, Planilla APP y fecha, y ver la información de la página para los CECOS que tenga autorizados, pero sin procesar nada.</strong><br><br>
+            
+            <strong>INSTRUCCIÓN OBLIGATORIA PARA REPLICACIÓN (USAR COMO MODELO OFICIAL):</strong><br>
+            Esta página debe usarse como modelo oficial en TODOS los cambios y módulos que requieran replicar la estructura. Copiar EXACTAMENTE todo el HTML + CSS + JS (incluyendo tema oscuro/claro, descripción colapsable y comentarios). No modificar la estructura base bajo ningún concepto. Esta es la referencia única y obligatoria para mantener consistencia en todo el sistema Aramark.
+            </p>
+        </div>
+    </section>
+
+    <p class="note">Con El CECO y la planilla APP el BOT va y convierte a Planilla de inventario, luego lista las diferencias del inventario y las guarda para análisis posterior.</p>
+
+    <!-- FORMULARIOS -->
+    <div class="grid-2-cols">
+        <div class="panel">
+            <h3 class="panel-title">Registrar Nuevo Inventario APP</h3>
+            <form id="create-form">
+                <input type="text" id="numero" placeholder="Número de Inventario APP" required>
+                <input type="text" id="ceco" placeholder="CECO" required>
+                <input type="date" id="fecha" required>
+                <button type="submit">Registrar</button>
+            </form>
+        </div>
+
+        <div class="panel">
+            <h3 class="panel-title">Subir Excel de Inventarios APP</h3>
+            <input type="file" id="excel-upload" accept=".xlsx, .xls">
+        </div>
+    </div>
+
+    <div class="search-bar">
+        <input type="text" id="search-input" placeholder="Buscar global...">
+    </div>
+
+    <!-- TABLA CON SCROLL + ENCABEZADOS FIJOS -->
+    <div class="panel">
+        <h3 class="panel-title">Lista de Inventarios APP</h3>
+        
+        <div style="margin-bottom: 10px; display: flex; align-items: center;">
+            <label style="margin-right: 10px;">
+                <input type="checkbox" id="process-all-flag"> Procesar Todos
+            </label>
+            <input type="date" id="process-date" style="margin-right: 10px;">
+            <button class="action-btn" id="auto-process">Proceso Automático</button>
+        </div>
+
+        <div class="status-filter">
+            <h4>Mostrar estados:</h4>
+            <label><input type="checkbox" checked data-status="Pendiente"> Pendiente</label>
+            <label><input type="checkbox" checked data-status="Procesando"> Procesando</label>
+            <label><input type="checkbox" checked data-status="Completado"> Completado</label>
+            <label><input type="checkbox" checked data-status="Fallido"> Fallido</label>
+        </div>
+
+        <div class="table-wrapper">
+            <table id="inventarios-table">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="select-all"></th>
+                        <th data-column="numero">Número <input type="text" class="filter-input" data-column="numero" placeholder="Filtrar..."></th>
+                        <th data-column="ceco">CECO <input type="text" class="filter-input" data-column="ceco" placeholder="Filtrar..."></th>
+                        <th data-column="fecha">Fecha <input type="text" class="filter-input" data-column="fecha" placeholder="Filtrar..."></th>
+                        <th data-column="estado">Estado <input type="text" class="filter-input" data-column="estado" placeholder="Filtrar..."></th>
+                        <th data-column="fechaProcesamiento">Fecha Procesamiento <input type="text" class="filter-input" data-column="fechaProcesamiento" placeholder="Filtrar..."></th>
+                        <th data-column="planillaCreada">Planilla Creada <input type="text" class="filter-input" data-column="planillaCreada" placeholder="Filtrar..."></th>
+                        <th data-column="inventarioNumero">Número de Inventario <input type="text" class="filter-input" data-column="inventarioNumero" placeholder="Filtrar..."></th>
+                        <th data-column="detalleObtenido">Detalle Obtenido <input type="text" class="filter-input" data-column="detalleObtenido" placeholder="Filtrar..."></th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<footer>
+    Prototipo Completo para Sistema Aramark © 2026
+</footer>
+
+<script>
+    // === DATOS + LÓGICA COMPLETA (restaurada al 100%) ===
+    let inventarios = [];
+    let sortColumn = 'numero';
+    let sortDirection = 1;
+    let filters = {};
+    let visibleStatuses = new Set(['Pendiente', 'Procesando', 'Completado', 'Fallido']);
+
+    function generateInitialData() {
+        const numPendientes = Math.floor(30 * 0.4);
+        const numOtros = 30 - numPendientes;
+        const otrosDist = Math.floor(numOtros / 3);
+
+        for (let i = 1; i <= 30; i++) {
+            const numero = 'APP' + i.toString().padStart(3, '0');
+            const ceco = 'CECO' + i.toString().padStart(3, '0');
+            const fecha = `2026-03-${(i % 28 + 1).toString().padStart(2, '0')}`;
+            let estado;
+            if (i <= numPendientes) estado = 'Pendiente';
+            else if (i <= numPendientes + otrosDist) estado = 'Procesando';
+            else if (i <= numPendientes + 2 * otrosDist) estado = 'Completado';
+            else estado = 'Fallido';
+            const planillaCreada = estado !== 'Pendiente';
+            const detalleObtenido = planillaCreada && Math.random() > 0.5;
+            const fechaProcesamiento = (estado !== 'Pendiente') ? `2026-03-${(i % 28 + 1).toString().padStart(2, '0')}` : '';
+            const inventarioNumero = planillaCreada ? 'INV-' + numero : '';
+            inventarios.push({ numero, ceco, fecha, estado, fechaProcesamiento, planillaCreada, inventarioNumero, detalleObtenido });
+        }
+    }
+
+    function renderTable() {
+        const globalFilter = document.getElementById('search-input').value.toLowerCase();
+        const tbody = document.querySelector('#inventarios-table tbody');
+        tbody.innerHTML = '';
+
+        let filteredInventarios = inventarios.filter(inv => {
+            let matches = true;
+            Object.keys(filters).forEach(key => {
+                let value = inv[key];
+                if (typeof value === 'boolean') value = value ? '✓' : '';
+                if (filters[key] && !String(value).toLowerCase().includes(filters[key].toLowerCase())) matches = false;
+            });
+            if (globalFilter) {
+                matches = matches && (inv.numero.toLowerCase().includes(globalFilter) || 
+                                      inv.ceco.toLowerCase().includes(globalFilter) || 
+                                      inv.fecha.includes(globalFilter));
+            }
+            matches = matches && visibleStatuses.has(inv.estado);
+            return matches;
+        });
+
+        filteredInventarios.sort((a, b) => {
+            let valA = a[sortColumn];
+            let valB = b[sortColumn];
+            if (typeof valA === 'boolean') valA = valA ? 1 : 0;
+            if (typeof valB === 'boolean') valB = valB ? 1 : 0;
+            if (valA < valB) return -sortDirection;
+            if (valA > valB) return sortDirection;
+            return 0;
+        });
+
+        filteredInventarios.forEach(inv => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="checkbox" class="row-select" data-numero="${inv.numero}"></td>
+                <td>${inv.numero}</td>
+                <td>${inv.ceco}</td>
+                <td>${inv.fecha}</td>
+                <td class="${inv.estado === 'Pendiente' ? 'estado-pendiente' : ''}">${inv.estado}</td>
+                <td>${inv.fechaProcesamiento || ''}</td>
+                <td>${inv.planillaCreada ? '✓' : ''}</td>
+                <td>${inv.inventarioNumero || ''}</td>
+                <td>${inv.detalleObtenido ? '✓' : ''}</td>
+                <td><button class="action-btn" onclick="updateEstado('${inv.numero}', 'Procesando')">Procesar</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function updateEstado(numero, nuevoEstado, fechaProc = new Date().toISOString().split('T')[0]) {
+        const inv = inventarios.find(i => i.numero === numero);
+        if (inv) {
+            if (inv.estado !== 'Pendiente') {
+                alert(`Error: No se puede procesar el inventario ${numero} porque no está en estado Pendiente.`);
+                return;
+            }
+            inv.estado = nuevoEstado;
+            inv.fechaProcesamiento = fechaProc;
+            updateAll();
+            alert(`Estado de ${numero} actualizado a ${nuevoEstado} (simulado por bot)`);
+
+            setTimeout(() => {
+                inv.planillaCreada = true;
+                inv.inventarioNumero = 'INV-' + inv.numero;
+                if (Math.random() > 0.2) {
+                    inv.estado = 'Completado';
+                    inv.detalleObtenido = true;
+                } else {
+                    inv.estado = 'Fallido';
+                    inv.detalleObtenido = false;
+                }
+                updateAll();
+            }, 3000);
+        }
+    }
+
+    function updateAll() {
+        renderTable();
+    }
+
+    window.onload = () => {
+        generateInitialData();
+        updateAll();
+
+        // === TEMA OSCURO + COLAPSABLE ===
+        const root = document.documentElement;
+        const themeToggle = document.getElementById('theme-toggle');
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        root.setAttribute('data-theme', savedTheme);
+        themeToggle.textContent = savedTheme === 'dark' ? '☀️ Modo claro' : '🌙 Modo oscuro';
+
+        themeToggle.addEventListener('click', () => {
+            const current = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            root.setAttribute('data-theme', current);
+            localStorage.setItem('theme', current);
+            themeToggle.textContent = current === 'dark' ? '☀️ Modo claro' : '🌙 Modo oscuro';
+        });
+
+        document.getElementById('desc-header').addEventListener('click', () => {
+            document.getElementById('page-description').classList.toggle('collapsed');
+        });
+
+        // === CHECKBOXES "Mostrar estados" (AHORA FUNCIONAN) ===
+        document.querySelectorAll('.status-filter input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                visibleStatuses = new Set();
+                document.querySelectorAll('.status-filter input[type="checkbox"]:checked').forEach(cb => {
+                    visibleStatuses.add(cb.getAttribute('data-status'));
+                });
+                updateAll();
+            });
+        });
+
+        // === ORDENAR POR COLUMNA (AHORA FUNCIONA) ===
+        document.querySelectorAll('#inventarios-table th[data-column]').forEach(th => {
+            th.addEventListener('click', () => {
+                const column = th.getAttribute('data-column');
+                if (sortColumn === column) {
+                    sortDirection = -sortDirection;
+                } else {
+                    sortColumn = column;
+                    sortDirection = 1;
+                }
+                updateAll();
+            });
+        });
+
+        // === RESTO DE EVENTOS (búsqueda, filtros columna, Excel, etc.) ===
+        document.getElementById('search-input').addEventListener('input', () => updateAll());
+
+        document.querySelectorAll('.filter-input').forEach(input => {
+            input.addEventListener('input', (e) => {
+                const column = e.target.getAttribute('data-column');
+                filters[column] = e.target.value;
+                updateAll();
+            });
+        });
+
+        document.getElementById('create-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newInv = {
+                numero: document.getElementById('numero').value,
+                ceco: document.getElementById('ceco').value,
+                fecha: document.getElementById('fecha').value,
+                estado: 'Pendiente',
+                fechaProcesamiento: '',
+                planillaCreada: false,
+                inventarioNumero: '',
+                detalleObtenido: false
+            };
+            inventarios.push(newInv);
+            updateAll();
+            e.target.reset();
+            alert('Inventario APP registrado (simulado). El bot procesará automáticamente.');
+        });
+
+        document.getElementById('excel-upload').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const sheet = workbook.Sheets[sheetName];
+                    const json = XLSX.utils.sheet_to_json(sheet, { header: ['numero', 'ceco', 'fecha'], range: 1 });
+                    const newInventarios = json.map(item => ({ ...item, estado: 'Pendiente', fechaProcesamiento: '', planillaCreada: false, inventarioNumero: '', detalleObtenido: false }));
+                    inventarios = [...inventarios, ...newInventarios];
+                    updateAll();
+                    alert('Excel subido e inventarios agregados (simulados). El bot procesará automáticamente.');
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        });
+
+        document.getElementById('select-all').addEventListener('change', (e) => {
+            const checked = e.target.checked;
+            document.querySelectorAll('.row-select').forEach(cb => { cb.checked = checked; });
+        });
+
+        document.getElementById('auto-process').addEventListener('click', () => {
+            const date = document.getElementById('process-date').value;
+            if (!date) {
+                alert('Por favor seleccione una fecha para el procesamiento.');
+                return;
+            }
+            let selected = [];
+            if (document.getElementById('process-all-flag').checked) {
+                selected = document.querySelectorAll('.row-select');
+            } else {
+                selected = document.querySelectorAll('.row-select:checked');
+            }
+            selected.forEach(cb => {
+                const numero = cb.getAttribute('data-numero');
+                updateEstado(numero, 'Procesando', date);
+            });
+            if (selected.length > 0) {
+                alert(`${selected.length} inventarios seleccionados enviados a procesar automáticamente (simulado).`);
+            }
+        });
+    };
+</script>
+</body>
+</html>

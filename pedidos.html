@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes de Pedidos - Modelo Oficial Aramark 2026</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+          crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        :root {
+            --brand-red: #d20000;
+            --brand-dark: #333333;
+            --bg-color: #f4f7f6;
+            --border-color: #e0e0e0;
+            --card-bg: #ffffff;
+            --text-muted: #6c757d;
+            --text-color: #333333;
+        }
+        :root[data-theme="dark"] {
+            --brand-dark: #f4f7f6;
+            --bg-color: #1f1f1f;
+            --border-color: #444444;
+            --card-bg: #2a2a2a;
+            --text-muted: #b0b0b0;
+            --text-color: #f4f7f6;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin:0; padding:0;
+            background:var(--bg-color);
+            color:var(--text-color);
+            transition:background-color 0.3s, color 0.3s;
+        }
+        header {
+            background:var(--brand-red);
+            color:white;
+            padding:15px 30px;
+            display:flex; justify-content:space-between; align-items:center;
+            box-shadow:0 4px 6px rgba(0,0,0,0.1);
+            position:fixed; width:100%; top:0; z-index:1000;
+        }
+        .nav-left { display:flex; align-items:center; gap:15px; }
+        .nav-left div { font-size:1.2em; font-weight:bold; }
+        .theme-toggle {
+            background:rgba(255,255,255,0.15);
+            border:1px solid rgba(255,255,255,0.4);
+            color:white; padding:6px 10px; border-radius:16px;
+            font-size:0.85em; cursor:pointer;
+        }
+        .nav-links a { color:white; text-decoration:none; margin-left:20px; font-size:0.9em; }
+
+        .container { padding:30px; max-width:1250px; margin:auto; margin-top:100px; }
+
+        .page-description {
+            max-width:1250px; margin:20px auto;
+            background:var(--card-bg);
+            border:1px solid var(--border-color); border-radius:8px;
+            box-shadow:0 2px 4px rgba(0,0,0,0.1);
+            overflow:hidden;
+        }
+        .desc-header {
+            display:flex; justify-content:space-between; align-items:center;
+            padding:15px 20px; background:rgba(210,0,0,0.05); cursor:pointer;
+        }
+        .desc-header h2 { margin:0; font-size:1.1em; color:var(--brand-red); }
+        .toggle-btn {
+            background:none; border:none; font-size:1.4em; color:var(--brand-red);
+            cursor:pointer; transition:transform 0.3s;
+        }
+        .desc-content {
+            padding:0 20px 20px 20px;
+            max-height:300px; overflow:hidden; transition:max-height 0.4s;
+        }
+        .page-description.collapsed .desc-content { max-height:0; padding-bottom:0; }
+        .page-description.collapsed .toggle-btn { transform:rotate(-90deg); }
+
+        /* === RESUMEN POR CECO – ÁREA FIJA CON BARRA DE DESPLAZAMIENTO VERTICAL (CORREGIDO) === */
+        .summary-section {
+            max-width:1250px; margin:25px auto;
+            background:var(--card-bg);
+            border:1px solid var(--border-color); border-radius:8px;
+            box-shadow:0 2px 4px rgba(0,0,0,0.1);
+            overflow:hidden;
+        }
+        .summary-scroll-container {
+            max-height: 380px;                    /* ← ALTURA FIJA */
+            overflow-y: auto;                     /* ← SCROLL VERTICAL */
+            overflow-x: hidden;
+            padding: 20px;
+            scrollbar-width: thin;
+            scrollbar-color: #d20000 #e0e0e0;
+        }
+        .summary-scroll-container::-webkit-scrollbar {
+            width: 9px;
+        }
+        .summary-scroll-container::-webkit-scrollbar-thumb {
+            background: var(--brand-red);
+            border-radius: 10px;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .upload-card {
+            background:#ffffff; border-radius:16px; padding:28px 32px;
+            box-shadow:0 6px 20px rgba(0,0,0,0.07);
+            max-width:760px; margin:25px auto; border:1px solid #f0f0f0;
+        }
+        .upload-card h3 { color:#d20000; font-size:1.4em; font-weight:700; margin-bottom:18px; }
+        .upload-card button {
+            background:linear-gradient(90deg,#0066ff,#0052cc); color:white; border:none; padding:14px 34px;
+            border-radius:10px; font-weight:600; font-size:1.05em; display:flex; align-items:center; gap:10px;
+            cursor:pointer; box-shadow:0 4px 15px rgba(0,102,255,0.35);
+        }
+        .upload-card button:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(0,102,255,0.45); }
+
+        .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:20px; margin-bottom:25px; }
+        .kpi-card {
+            background:var(--card-bg); padding:20px; border-radius:8px;
+            box-shadow:0 2px 5px rgba(0,0,0,0.05);
+            text-align:center; border:2px solid transparent; transition:all 0.3s;
+        }
+        .kpi-card:hover { transform:translateY(-3px); border-color:var(--brand-red); box-shadow:0 6px 12px rgba(210,0,0,0.15); }
+        .kpi-card h3 { margin:0 0 10px 0; font-size:0.85em; color:var(--text-muted); text-transform:uppercase; }
+        .kpi-card .value { font-size:2em; font-weight:bold; color:var(--brand-dark); }
+
+        .charts-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:20px; margin-bottom:30px; }
+        .chart-section {
+            background:var(--card-bg); padding:25px; border-radius:8px;
+            box-shadow:0 2px 5px rgba(0,0,0,0.05);
+            border:1px solid var(--border-color); display:flex; flex-direction:column; align-items:center;
+        }
+        .chart-container { position:relative; height:320px; width:100%; }
+
+        .note { font-style:italic; color:var(--text-muted); margin-bottom:20px; font-size:0.9em; }
+
+        .filters {
+            background:var(--card-bg); padding:22px; border-radius:12px;
+            border:1px solid var(--border-color); margin-bottom:25px;
+            box-shadow:0 2px 8px rgba(0,0,0,0.06);
+        }
+        .filters-row { display:flex; flex-wrap:wrap; gap:14px; align-items:center; }
+        .filters-row .group { display:flex; align-items:center; gap:8px; }
+        .filter-label {
+            font-size:0.85em; color:var(--text-muted); margin-right:6px;
+            white-space:nowrap; font-weight:600;
+        }
+        .filters input, .filters select {
+            padding:10px 12px; border:1px solid var(--border-color); border-radius:6px;
+            background:var(--card-bg); color:var(--brand-dark); font-size:0.95em;
+        }
+        .filters input:focus, .filters select:focus {
+            outline:none; border-color:var(--brand-red);
+            box-shadow:0 0 0 3px rgba(210,0,0,0.15);
+        }
+        .action-group { margin-left:auto; display:flex; gap:10px; }
+        .vista-btn, .export-btn, .clear-btn {
+            background:var(--brand-red); color:white; border:none; padding:11px 20px;
+            cursor:pointer; border-radius:6px; font-size:0.9em; font-weight:600; transition:all 0.2s;
+        }
+        .vista-btn:hover, .export-btn:hover, .clear-btn:hover { background:#b30000; transform:translateY(-1px); }
+        .clear-btn { background:#555; }
+        .clear-btn:hover { background:#333; }
+
+        .panel {
+            background:var(--card-bg); padding:20px; border-radius:8px;
+            box-shadow:0 2px 5px rgba(0,0,0,0.05); border:1px solid var(--border-color);
+        }
+
+        .table-container { position:relative; }
+        .top-scroll {
+            overflow-x:auto; overflow-y:hidden;
+            height:16px; margin-bottom:2px;
+        }
+        .top-scroll-inner {
+            height:16px;
+            width:3600px;
+        }
+        .table-wrapper {
+            max-height:680px;
+            overflow:auto;
+            border:1px solid var(--border-color);
+            border-radius:8px;
+            background:var(--card-bg);
+        }
+        table {
+            width:100%;
+            min-width:3600px;
+            border-collapse:collapse;
+            font-size:0.9em;
+            table-layout:fixed;
+        }
+        th, td {
+            border-bottom:1px solid var(--border-color);
+            padding:10px; text-align:left;
+        }
+        th {
+            background:#f8f9fa;
+            position: sticky;
+            top: 0;
+            z-index: 30;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.12);
+        }
+
+        .badge {
+            padding:5px 12px; border-radius:20px;
+            font-size:0.8em; font-weight:600;
+            display:inline-flex; align-items:center; gap:5px;
+        }
+
+        footer {
+            text-align:center; padding:15px;
+            background:var(--card-bg);
+            box-shadow:0 -2px 4px rgba(0,0,0,0.1);
+            font-size:12px; color:var(--text-muted);
+            margin-top:20px;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="nav-left">
+        <div style="font-size:1.2em;font-weight:bold;">Reportes de Pedidos</div>
+        <button class="theme-toggle" id="theme-toggle">Modo oscuro</button>
+    </div>
+    <div class="nav-links">
+        <a href="registro_masivo_inventarios.html">Volver al Inicio</a>
+        <a href="mapa.html">Mapa del sitio</a>
+    </div>
+</header>
+
+<div class="container">
+    <section class="page-description" id="page-description">
+        <div class="desc-header" id="desc-header">
+            <h2>Descripción de la Página (Modelo Oficial Aramark 2026)</h2>
+            <button class="toggle-btn" id="toggle-desc">▼</button>
+        </div>
+        <div class="desc-content">
+            <p>Versión premium con filtros idénticos al diseño oficial + barra de scroll superior sincronizada y cabecera fija.<br>
+                <strong>Resumen por CECO ahora tiene altura fija (380px) + barra de desplazamiento vertical siempre visible cuando no caben todas las tarjetas.</strong>
+            </p>
+        </div>
+    </section>
+
+    <div class="upload-card">
+        <h3>Carga Masiva de Pedidos</h3>
+        <p>Simula la ingesta automática de datos desde la vista “Pedidos” de la base de datos Brand.</p>
+        <button onclick="document.getElementById('excel-upload-pedidos').click()">
+            <i class="fas fa-file-excel"></i> Subir Pedidos
+        </button>
+        <input type="file" id="excel-upload-pedidos" accept=".xlsx,.xls" style="display:none;">
+    </div>
+
+    <!-- KPIs GLOBALES -->
+    <div class="kpi-grid">
+        <div class="kpi-card" id="card-total"><h3>Total Pedidos</h3><div class="value">0</div></div>
+        <div class="kpi-card" id="card-monto-total"><h3>Monto Total</h3><div class="value">$0</div></div>
+        <div class="kpi-card" id="card-abiertos"><h3>Pedidos Abiertos</h3><div class="value">0</div></div>
+        <div class="kpi-card" id="card-cecos-unicos"><h3>CECOS Únicos</h3><div class="value">0</div></div>
+    </div>
+
+    <!-- RESUMEN POR CECO – CORREGIDO CON BARRA DE DESPLAZAMIENTO VERTICAL -->
+    <section class="summary-section page-description" id="resumen-section">
+        <div class="desc-header" id="resumen-header">
+            <h2>Resumen por CECO</h2>
+            <button class="toggle-btn" id="toggle-resumen">▼</button>
+        </div>
+        <div class="desc-content">
+            <div class="summary-scroll-container">
+                <div class="summary-grid" id="summary-grid"></div>
+            </div>
+        </div>
+    </section>
+
+    <div class="charts-grid">
+        <div class="chart-section">
+            <h3 style="margin-top:0;color:#d20000;">Distribución por CECOS</h3>
+            <div class="chart-container"><canvas id="chartCecos"></canvas></div>
+        </div>
+        <div class="chart-section">
+            <h3 style="margin-top:0;color:#d20000;">Distribución por Estado</h3>
+            <div class="chart-container"><canvas id="chartEstados"></canvas></div>
+        </div>
+        <div class="chart-section">
+            <h3 style="margin-top:0;color:#d20000;">Pedidos por Proveedor</h3>
+            <div class="chart-container"><canvas id="chartPorProveedor"></canvas></div>
+        </div>
+    </div>
+
+    <p class="note">120 pedidos totales • Todo se recalcula automáticamente según el rango de fechas seleccionado.</p>
+
+    <!-- FILTROS EXACTOS -->
+    <div class="filters">
+        <div class="filters-row">
+            <input type="text" id="global-search" placeholder="Búsqueda global">
+            <input type="text" id="filter-pedido" placeholder="N° Pedido">
+            <input type="text" id="filter-cecos" placeholder="CECOS">
+            <input type="text" id="filter-proveedor" placeholder="Proveedor">
+
+            <div class="group">
+                <span class="filter-label">Rango de Fechas:</span>
+                <input type="date" id="fecha-desde" value="2026-03-01">
+                <span class="filter-label" style="margin:0 4px;">hasta</span>
+                <input type="date" id="fecha-hasta" value="2026-03-31">
+            </div>
+
+            <div class="group">
+                <span class="filter-label">Estatus:</span>
+                <select id="filter-estatus">
+                    <option value="">Todos</option>
+                    <option value="Creado">Creado</option>
+                    <option value="Enviado">Enviado</option>
+                    <option value="Parcial">Parcial</option>
+                    <option value="Completado">Completado</option>
+                    <option value="Anulado">Anulado</option>
+                </select>
+            </div>
+
+            <input type="text" id="filter-estado" placeholder="Estado">
+
+            <div class="action-group">
+                <button class="vista-btn" id="vista-600624">Vista 600624</button>
+                <button class="export-btn" id="export-excel">Exportar Excel</button>
+                <button class="clear-btn" id="clear-filters">Limpiar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <div class="top-scroll" id="top-scroll"><div class="top-scroll-inner" id="top-scroll-inner"></div></div>
+        <div class="table-wrapper" id="table-wrapper">
+            <div class="panel">
+                <h3 class="panel-title">Lista Detallada – Reportes de Pedidos</h3>
+                <table id="pedidos-table">
+                    <thead>
+                    <tr>
+                        <th onclick="sortTable('pedidoId')">Número Pedido</th>
+                        <th onclick="sortTable('fechaEmision')">Fecha Emisión</th>
+                        <th onclick="sortTable('fechaEntrega')">Fecha Entrega</th>
+                        <th onclick="sortTable('cecos')">CECO</th>
+                        <th onclick="sortTable('proveedor')">Proveedor</th>
+                        <th onclick="sortTable('descripcion')">Descripción</th>
+                        <th onclick="sortTable('monto')">Monto</th>
+                        <th onclick="sortTable('impuesto')">Impuesto</th>
+                        <th onclick="sortTable('total')">Total</th>
+                        <th onclick="sortTable('estado')">Estado</th>
+                    </tr>
+                    </thead>
+                    <tbody id="pedidos-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer>Prototipo Premium Aramark © 2026 – Resumen por CECO con área fija + barra de desplazamiento vertical</footer>
+
+<script>
+window.addEventListener('load', () => {
+    const root = document.documentElement;
+    const themeToggle = document.getElementById('theme-toggle');
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    root.setAttribute('data-theme', savedTheme);
+    themeToggle.textContent = savedTheme === 'dark' ? 'Modo claro' : 'Modo oscuro';
+    themeToggle.addEventListener('click', () => {
+        const current = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', current);
+        localStorage.setItem('theme', current);
+        themeToggle.textContent = current === 'dark' ? 'Modo claro' : 'Modo oscuro';
+    });
+
+    document.getElementById('desc-header').addEventListener('click', () => {
+        document.getElementById('page-description').classList.toggle('collapsed');
+    });
+
+    document.getElementById('resumen-header').addEventListener('click', () => {
+        document.getElementById('resumen-section').classList.toggle('collapsed');
+    });
+
+    let pedidos = [];
+    let filteredPedidos = [];
+    let chartCecosInstance = null;
+    let chartEstadosInstance = null;
+    let chartPorProveedorInstance = null;
+
+    const cecosList = [55016, 41640, 30227, 30296, 32164, 32161, 32166, 32163, 32162, 32168, 600624];
+    const proveedores = ['Proveedor A', 'Proveedor B', 'Proveedor C', 'Proveedor D', 'Proveedor E'];
+    const estados = ['Creado', 'Enviado', 'Parcial', 'Completado', 'Anulado'];
+    const descripciones = ['Suministros de oficina', 'Servicios de mantenimiento', 'Compras de equipo', 'Gastos operativos', 'Otros'];
+
+    function generateInitialPedidos() {
+        pedidos = [];
+        let pedidoIdCounter = 1;
+        cecosList.forEach(ceco => {
+            const count = Math.floor(120 / cecosList.length) + (Math.random() > 0.5 ? 2 : 0);
+            for (let i = 0; i < count; i++) {
+                const pedidoId = pedidoIdCounter.toString().padStart(6, '0');
+                const day = Math.floor(Math.random() * 28) + 1;
+                const fechaEmision = `2026-03-${day.toString().padStart(2, '0')}`;
+                const diasEntrega = Math.floor(Math.random() * 15 + 1);
+                const entregaDay = (day + diasEntrega) % 28 + 1;
+                const fechaEntrega = `2026-04-${entregaDay.toString().padStart(2, '0')}`;
+                const monto = Math.floor(Math.random() * 10000 + 1000);
+                const impuesto = Math.floor(monto * 0.19);
+                const total = monto + impuesto;
+                const proveedor = proveedores[Math.floor(Math.random() * proveedores.length)];
+                const descripcion = descripciones[Math.floor(Math.random() * descripciones.length)];
+                const estado = estados[Math.floor(Math.random() * estados.length)];
+
+                pedidos.push({
+                    pedidoId, fechaEmision, fechaEntrega, monto, impuesto, total,
+                    cecos: ceco, proveedor, descripcion, estado
+                });
+                pedidoIdCounter++;
+            }
+        });
+        while (pedidos.length < 120) {
+            const extra = { ...pedidos[Math.floor(Math.random() * pedidos.length)] };
+            extra.pedidoId = pedidoIdCounter.toString().padStart(6, '0');
+            pedidos.push(extra);
+            pedidoIdCounter++;
+        }
+    }
+
+    function updateFiltered() {
+        const gSearch = (document.getElementById('global-search').value || '').toLowerCase();
+        const filterPedido = (document.getElementById('filter-pedido').value || '').toLowerCase();
+        const filterCecos = (document.getElementById('filter-cecos').value || '').toLowerCase();
+        const filterProveedor = (document.getElementById('filter-proveedor').value || '').toLowerCase();
+        const filterEstado = (document.getElementById('filter-estado').value || '').toLowerCase();
+        const fechaDesde = document.getElementById('fecha-desde').value;
+        const fechaHasta = document.getElementById('fecha-hasta').value;
+        const filterEstatus = document.getElementById('filter-estatus').value;
+
+        filteredPedidos = pedidos.filter(f => {
+            const anyMatch = gSearch ? Object.values(f).some(v => String(v).toLowerCase().includes(gSearch)) : true;
+            const matchFecha = (!fechaDesde || f.fechaEmision >= fechaDesde) && (!fechaHasta || f.fechaEmision <= fechaHasta);
+            const matchEstatus = !filterEstatus || f.estado === filterEstatus;
+
+            return anyMatch &&
+                f.pedidoId.toLowerCase().includes(filterPedido) &&
+                f.cecos.toString().toLowerCase().includes(filterCecos) &&
+                f.proveedor.toLowerCase().includes(filterProveedor) &&
+                f.estado.toLowerCase().includes(filterEstado) &&
+                matchFecha && matchEstatus;
+        });
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('pedidos-tbody');
+        tbody.innerHTML = '';
+        filteredPedidos.forEach(f => {
+            const tr = document.createElement('tr');
+            const badgeColor = f.estado === 'Completado' ? '#28a745' : f.estado === 'Anulado' ? '#dc3545' : '#ffc107';
+            tr.innerHTML = `
+                <td><strong>${f.pedidoId}</strong></td>
+                <td>${f.fechaEmision}</td>
+                <td>${f.fechaEntrega}</td>
+                <td>${f.cecos}</td>
+                <td>${f.proveedor}</td>
+                <td>${f.descripcion}</td>
+                <td>$${f.monto}</td>
+                <td>$${f.impuesto}</td>
+                <td><strong>$${f.total}</strong></td>
+                <td><span class="badge" style="background:${badgeColor};color:white;">${f.estado}</span></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function renderKPIs() {
+        const total = filteredPedidos.length;
+        const montoTotal = filteredPedidos.reduce((sum, f) => sum + f.total, 0);
+        const abiertos = filteredPedidos.filter(f => f.estado !== 'Completado' && f.estado !== 'Anulado').length;
+        const cecosUnicos = new Set(filteredPedidos.map(f => f.cecos)).size;
+
+        document.querySelector('#card-total .value').textContent = total;
+        document.querySelector('#card-monto-total .value').textContent = '$' + montoTotal.toLocaleString('es-CL');
+        document.querySelector('#card-abiertos .value').textContent = abiertos;
+        document.querySelector('#card-cecos-unicos .value').textContent = cecosUnicos;
+    }
+
+    function renderSummaryCards() {
+        const grid = document.getElementById('summary-grid');
+        grid.innerHTML = '';
+        const groups = {};
+        filteredPedidos.forEach(item => {
+            if (!groups[item.cecos]) groups[item.cecos] = [];
+            groups[item.cecos].push(item);
+        });
+        Object.keys(groups).forEach(key => {
+            const items = groups[key];
+            const totalPos = items.length;
+            const monto = items.reduce((sum, i) => sum + i.total, 0);
+            const abiertos = items.filter(i => i.estado !== 'Completado' && i.estado !== 'Anulado').length;
+            const prec = totalPos > 0 ? Math.round(((totalPos - abiertos) / totalPos) * 100) : 0;
+            const card = document.createElement('div');
+            card.className = 'summary-card';
+            card.innerHTML = `
+                <h4>CECO ${key}</h4>
+                <div class="metric">${totalPos}</div>
+                <div class="sub">pedidos</div>
+                <div style="margin:12px 0; color:#d20000;font-weight:700;">${abiertos} abiertos • ${prec}% completados</div>
+                <div style="font-size:1.1em;color:#28a745;">$${monto.toLocaleString('es-CL')}</div>
+                <div class="sub">monto total</div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    function renderCharts() {
+        if (!filteredPedidos.length) {
+            if (chartCecosInstance) chartCecosInstance.destroy();
+            if (chartEstadosInstance) chartEstadosInstance.destroy();
+            if (chartPorProveedorInstance) chartPorProveedorInstance.destroy();
+            return;
+        }
+
+        const cecosCount = {};
+        filteredPedidos.forEach(item => cecosCount[item.cecos] = (cecosCount[item.cecos] || 0) + 1);
+        const sortedCecos = Object.entries(cecosCount).sort((a,b)=>b[1]-a[1]).slice(0,8);
+        if (chartCecosInstance) chartCecosInstance.destroy();
+        chartCecosInstance = new Chart(document.getElementById('chartCecos'), {
+            type: 'bar',
+            data: {
+                labels: sortedCecos.map(c=>c[0]),
+                datasets: [{ label: 'Pedidos', data: sortedCecos.map(c=>c[1]), backgroundColor: '#d20000', borderRadius: 8 }]
+            },
+            options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} }
+        });
+
+        const estadoCounts = filteredPedidos.reduce((acc, f) => { acc[f.estado] = (acc[f.estado] || 0) + 1; return acc; }, {});
+        if (chartEstadosInstance) chartEstadosInstance.destroy();
+        chartEstadosInstance = new Chart(document.getElementById('chartEstados'), {
+            type: 'doughnut',
+            data: { labels: Object.keys(estadoCounts), datasets: [{ data: Object.values(estadoCounts), backgroundColor: ['#28a745','#ffc107','#dc3545','#6c757d','#d20000'], borderWidth: 6 }] },
+            options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom'}} }
+        });
+
+        const provCount = {};
+        filteredPedidos.forEach(item => provCount[item.proveedor] = (provCount[item.proveedor] || 0) + 1);
+        const sortedProv = Object.entries(provCount).sort((a,b)=>b[1]-a[1]);
+        if (chartPorProveedorInstance) chartPorProveedorInstance.destroy();
+        chartPorProveedorInstance = new Chart(document.getElementById('chartPorProveedor'), {
+            type: 'bar',
+            data: { labels: sortedProv.map(p=>p[0]), datasets: [{ label: 'Pedidos', data: sortedProv.map(p=>p[1]), backgroundColor: '#d20000', borderRadius: 8 }] },
+            options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} }
+        });
+    }
+
+    function updateAll() {
+        updateFiltered();
+        renderTable();
+        renderKPIs();
+        renderSummaryCards();
+        renderCharts();
+    }
+
+    window.sortTable = function(field) {
+        alert(`Ordenando por ${field} (funcionalidad completa en producción)`);
+    };
+
+    ['global-search','filter-pedido','filter-cecos','filter-proveedor','filter-estado','fecha-desde','fecha-hasta','filter-estatus']
+        .forEach(id => {
+            const el = document.getElementById(id);
+            if (el.tagName === 'SELECT') el.addEventListener('change', updateAll);
+            else el.addEventListener('input', updateAll);
+        });
+
+    document.getElementById('vista-600624').addEventListener('click', () => {
+        document.getElementById('filter-cecos').value = '600624';
+        updateAll();
+    });
+
+    document.getElementById('clear-filters').addEventListener('click', () => {
+        ['global-search','filter-pedido','filter-cecos','filter-proveedor','filter-estado'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('fecha-desde').value = '2026-03-01';
+        document.getElementById('fecha-hasta').value = '2026-03-31';
+        document.getElementById('filter-estatus').value = '';
+        updateAll();
+    });
+
+    function exportToExcel() {
+        const ws = XLSX.utils.json_to_sheet(filteredPedidos);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Pedidos");
+        XLSX.writeFile(wb, 'reportes_pedidos_premium_2026.xlsx');
+    }
+    document.getElementById('export-excel').addEventListener('click', exportToExcel);
+
+    generateInitialPedidos();
+    updateAll();
+
+    // Scroll superior sincronizado (tabla)
+    const topScroll = document.getElementById('top-scroll');
+    const tableWrapper = document.getElementById('table-wrapper');
+    tableWrapper.addEventListener('scroll', () => { topScroll.scrollLeft = tableWrapper.scrollLeft; });
+    topScroll.addEventListener('scroll', () => { tableWrapper.scrollLeft = topScroll.scrollLeft; });
+});
+</script>
+</body>
+</html>

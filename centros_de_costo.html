@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Centros de Costo</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+<style>
+    :root {
+        --brand-red: #d20000;
+        --brand-dark: #333333;
+        --bg-color: #f4f7f6;
+        --border-color: #e0e0e0;
+        --card-bg: #ffffff;
+        --text-muted: #6c757d;
+        --text-color: #333333;
+    }
+    :root[data-theme="dark"] {
+        --brand-dark: #f4f7f6;
+        --bg-color: #1f1f1f;
+        --border-color: #444444;
+        --card-bg: #2a2a2a;
+        --text-muted: #b0b0b0;
+        --text-color: #f4f7f6;
+    }
+    * { box-sizing: border-box; }
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0; padding: 0;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    header {
+        background-color: var(--brand-red);
+        color: white;
+        padding: 15px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        position: fixed;
+        width: 100%;
+        top: 0;
+        z-index: 1000;
+    }
+    .nav-left { display: flex; align-items: center; gap: 15px; }
+    .nav-left div { font-size: 1.2em; font-weight: bold; }
+    .theme-toggle {
+        background: rgba(255,255,255,0.15);
+        border: 1px solid rgba(255,255,255,0.4);
+        color: white;
+        padding: 6px 10px;
+        border-radius: 16px;
+        font-size: 0.85em;
+        cursor: pointer;
+    }
+    .nav-links a {
+        color: white;
+        text-decoration: none;
+        margin-left: 20px;
+        font-size: 0.9em;
+    }
+
+    .container { padding: 30px; max-width: 1200px; margin: auto; margin-top: 100px; }
+    h2 { border-bottom: 3px solid var(--brand-red); padding-bottom: 10px; margin-top: 0; }
+
+    /* DESCRIPCIÓN COLAPSABLE */
+    .page-description {
+        max-width: 1200px;
+        margin: 25px auto;
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    .desc-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 25px;
+        background-color: rgba(210,0,0,0.05);
+        cursor: pointer;
+    }
+    .desc-header h2 { margin: 0; font-size: 1.1em; color: var(--brand-red); }
+    .toggle-btn {
+        background: none;
+        border: none;
+        font-size: 1.4em;
+        color: var(--brand-red);
+        cursor: pointer;
+        transition: transform 0.3s ease;
+    }
+    .desc-content {
+        padding: 0 25px 25px 25px;
+        max-height: 400px;
+        overflow: hidden;
+        transition: max-height 0.4s ease;
+    }
+    .page-description.collapsed .desc-content {
+        max-height: 0;
+        padding-bottom: 0;
+    }
+    .page-description.collapsed .toggle-btn {
+        transform: rotate(-90deg);
+    }
+
+    .panel { background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid var(--border-color); }
+    .panel-title { margin-top: 0; font-size: 1.1em; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+
+    form { display: flex; flex-direction: column; gap: 12px; }
+    input { padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--card-bg); }
+
+    /* Layout dividido */
+    .create-columns {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+    }
+    @media (max-width: 768px) {
+        .create-columns { grid-template-columns: 1fr; }
+    }
+
+    /* BOTONES EXCEL (solo en tarjeta CECO) */
+    .button-group {
+        margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .btn-primary {
+        background: linear-gradient(90deg, var(--brand-red), #b30000);
+        color: white;
+        border: none;
+        padding: 14px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 1.05em;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(210,0,0,0.25);
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(210,0,0,0.35);
+    }
+    .btn-row {
+        display: flex;
+        gap: 12px;
+    }
+    .btn-secondary {
+        flex: 1;
+        background: linear-gradient(90deg, #0066ff, #0052cc);
+        color: white;
+        border: none;
+        padding: 14px;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0,102,255,0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,102,255,0.35);
+    }
+
+    .search-bar input { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--card-bg); }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.95em; }
+    th, td { border-bottom: 1px solid var(--border-color); padding: 12px; text-align: left; }
+    th { background-color: rgba(0,0,0,0.03); }
+    tr:hover { background-color: rgba(210,0,0,0.05); }
+
+    .action-group {
+        display: flex;
+        gap: 6px;
+    }
+    .action-btn {
+        background-color: var(--brand-red);
+        color: white;
+        border: none;
+        padding: 6px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.85em;
+    }
+    .action-btn.delete { background-color: #d20000; }
+    .action-btn.audit { background-color: #0066ff; }
+
+    footer {
+        text-align: center;
+        padding: 18px;
+        background-color: var(--card-bg);
+        border-top: 1px solid var(--border-color);
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 40px;
+    }
+</style></head>
+<body>
+
+<header>
+    <div class="nav-left">
+        <div style="font-size: 1.2em; font-weight: bold;">Gestión de Centros de Costo</div>
+        <button class="theme-toggle" id="theme-toggle" aria-label="Cambiar tema">🌙 Modo oscuro</button>
+    </div>
+    <div class="nav-links">
+        <a href="contabilizacion.html">Volver</a>
+        <a href="Mapa.html">Mpa del Sitio</a>
+    </div>
+</header>
+
+<div class="container">
+
+
+<!-- DESCRIPCIÓN COLAPSABLE – VERSIÓN MEJORADA -->
+<section class="page-description" id="page-description">
+    <div class="desc-header" id="desc-header">
+        <h2>Descripción de la Página (Especificación Funcional - Modelo Oficial)</h2>
+        <button class="toggle-btn" id="toggle-desc">▼</button>
+    </div>
+    <div id="description-content" class="desc-content">
+        <p>Esta página permite la gestión completa y centralizada de <strong>Centros de Costo (CECOs)</strong> y <strong>Centros de Distribución (CDs)</strong> dentro del sistema Aramark.<br><br>
+        
+        <strong>Funcionalidades para Centros de Costo (CECOs):</strong><br>
+        • Agregar registros individualmente (con campos opcionales Atributo y Agrupador).<br>
+        • Subir y exportar masivamente vía Excel.<br>
+        • Buscar, editar, eliminar y consultar auditoría completa de cada registro.<br><br>
+        
+        <strong>Funcionalidades para Centros de Distribución (CDs):</strong><br>
+        • Agregar centros de distribución que permiten incorporar el o los CDs desde los que se envía la guía.<br>
+        • Esto habilita la selección exclusiva de guías que provengan del origen seleccionado, facilitando la configuración de reglas de negocio específicas por punto de origen y optimizando la trazabilidad y contabilización de guías.<br><br>
+        
+        <strong>INSTRUCCIÓN OBLIGATORIA PARA REPLICACIÓN (USAR COMO MODELO OFICIAL):</strong><br>
+        Esta página debe usarse como modelo oficial en TODOS los cambios y módulos que requieran replicar la estructura. Copiar EXACTAMENTE todo el HTML + CSS + JS (incluyendo descripción colapsable y tema oscuro/claro). Esta es la referencia única y obligatoria para mantener consistencia en todo el sistema Aramark.
+        </p>
+    </div>
+</section>
+
+<!-- === PANEL DIVIDIDO === -->
+<div class="create-columns">
+    <!-- Izquierda: Tarjeta CECO -->
+    <div class="panel">
+        <h3 class="panel-title">Agregar CECO Individualmente</h3>
+        <form id="add-form">
+            <input type="text" id="ceco" placeholder="Código CECO" required>
+            <input type="text" id="nombre" placeholder="Nombre del Centro de Costo" required>
+            <input type="text" id="responsable" placeholder="Responsable">
+            <input type="text" id="atributo" placeholder="Atributo (opcional)">
+            <input type="text" id="agrupador" placeholder="Agrupador (opcional)">
+            <input type="email" id="email1" placeholder="Email 1">
+            <input type="email" id="email2" placeholder="Email 2">
+            <input type="email" id="email3" placeholder="Email 3">
+            
+            <button type="submit" class="btn-primary">Guardar CECO</button>
+        </form>
+
+        <!-- BOTONES EXCEL SOLO PARA CECO -->
+        <div class="button-group">
+            <div class="btn-row">
+                <button onclick="document.getElementById('excel-upload').click()" class="btn-secondary">
+                    <i class="fas fa-file-excel"></i> Subir Excel (Masivo)
+                </button>
+                <button onclick="exportarExcel()" class="btn-secondary">
+                    <i class="fas fa-file-excel"></i> Exportar Excel
+                </button>
+            </div>
+            <input type="file" id="excel-upload" accept=".xlsx,.xls" style="display:none;">
+        </div>
+    </div>
+
+    <!-- Derecha: Tarjeta Centro de Distribución -->
+    <div class="panel">
+        <h3 class="panel-title">Agregar Centro de Distribución</h3>
+        <form id="cd-form">
+            <input type="text" id="cd-codigo" placeholder="Código CD (ej: CD-001)" required>
+            <input type="text" id="cd-nombre" placeholder="Nombre del Centro" required>
+            <input type="text" id="cd-ubicacion" placeholder="Ubicación (ej: Santiago - RM)" required>
+            <button type="submit" class="btn-primary">Guardar Centro</button>
+        </form>
+    </div>
+</div>
+
+<div class="search-bar">
+    <input type="text" id="search-input" placeholder="Buscar por CECO, nombre o responsable...">
+</div>
+
+<div class="panel" style="overflow-x: auto;">
+    <h3 class="panel-title">Lista de Centros de Costo</h3>
+    <table id="cecos-table">
+        <thead>
+            <tr>
+                <th>CECO</th>
+                <th>Nombre</th>
+                <th>Responsable</th>
+                <th>Atributo</th>
+                <th>Agrupador</th>
+                <th>Email 1</th>
+                <th>Email 2</th>
+                <th>Email 3</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="cecos-tbody"></tbody>
+    </table>
+</div>
+
+<!-- Lista de Centros de Distribución -->
+<div class="panel" style="margin-top: 40px; overflow-x: auto;">
+    <h3 class="panel-title">Lista de Centros de Distribución</h3>
+    <table id="centros-table">
+        <thead>
+            <tr>
+                <th>Código CD</th>
+                <th>Nombre</th>
+                <th>Ubicación</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+</div>
+
+<footer>Prototipo Completo para Sistema Aramark © 2026</footer>
+
+<script>
+    let cecos = [
+        { ceco: "55016", nombre: "BOD Clinica Alemana", responsable: "Juan Pérez", atributo: "Producción Alimentaria", agrupador: "Región Norte", email1: "jperez@aramark.cl", email2: "", email3: "" },
+        { ceco: "41640", nombre: "BOD Clin Davila", responsable: "María López", atributo: "Distribución", agrupador: "Región Sur", email1: "mlopez@aramark.cl", email2: "", email3: "" },
+        { ceco: "30227", nombre: "Escondida Food", responsable: "Carlos Ruiz", atributo: "", agrupador: "Región Central", email1: "cruiz@aramark.cl", email2: "", email3: "" }
+    ];
+
+    let centros = [
+        { codigo: "CD-001", nombre: "Centro Norte - Santiago", ubicacion: "Santiago, Región Metropolitana" },
+        { codigo: "CD-002", nombre: "Centro Sur - Concepción", ubicacion: "Concepción, Región del Bío Bío" },
+        { codigo: "CD-003", nombre: "Centro Valparaíso", ubicacion: "Valparaíso, Región de Valparaíso" }
+    ];
+
+    function renderTable(filter = '') {
+        const tbody = document.getElementById('cecos-tbody');
+        tbody.innerHTML = '';
+        const filtered = cecos.filter(c => 
+            c.ceco.toLowerCase().includes(filter) || 
+            c.nombre.toLowerCase().includes(filter) ||
+            c.responsable.toLowerCase().includes(filter)
+        );
+        filtered.forEach((c, i) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${c.ceco}</td>
+                <td>${c.nombre}</td>
+                <td>${c.responsable}</td>
+                <td>${c.atributo || '—'}</td>
+                <td>${c.agrupador || '—'}</td>
+                <td>${c.email1}</td>
+                <td>${c.email2}</td>
+                <td>${c.email3}</td>
+                <td>
+                    <div class="action-group">
+                        <button class="action-btn" onclick="editarCeco(${i})">Editar</button>
+                        <button class="action-btn delete" onclick="eliminarCeco(${i})">Eliminar</button>
+                        <button class="action-btn audit" onclick="auditoriaCeco(${i})">Auditoría</button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function renderCentrosTable() {
+        const tbody = document.querySelector('#centros-table tbody');
+        tbody.innerHTML = '';
+        centros.forEach(cd => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${cd.codigo}</strong></td>
+                <td>${cd.nombre}</td>
+                <td>${cd.ubicacion}</td>
+                <td>
+                    <div class="action-group">
+                        <button class="action-btn" onclick="editCentro('${cd.codigo}')">Editar</button>
+                        <button class="action-btn delete" onclick="deleteCentro('${cd.codigo}')">Eliminar</button>
+                        <button class="action-btn audit" onclick="auditoriaCentro('${cd.codigo}')">Auditoría</button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    document.getElementById('add-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        cecos.push({
+            ceco: document.getElementById('ceco').value,
+            nombre: document.getElementById('nombre').value,
+            responsable: document.getElementById('responsable').value || '',
+            atributo: document.getElementById('atributo').value || '',
+            agrupador: document.getElementById('agrupador').value || '',
+            email1: document.getElementById('email1').value || '',
+            email2: document.getElementById('email2').value || '',
+            email3: document.getElementById('email3').value || ''
+        });
+        renderTable(document.getElementById('search-input').value);
+        e.target.reset();
+        showToast('✅ CECO agregado correctamente');
+    });
+
+    document.getElementById('cd-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const newCentro = {
+            codigo: document.getElementById('cd-codigo').value.trim(),
+            nombre: document.getElementById('cd-nombre').value.trim(),
+            ubicacion: document.getElementById('cd-ubicacion').value.trim() || 'Sin especificar'
+        };
+        if (newCentro.codigo && newCentro.nombre) {
+            centros.push(newCentro);
+            renderCentrosTable();
+            e.target.reset();
+            showToast('✅ Centro de distribución guardado correctamente');
+        } else {
+            showToast('⚠️ Completa Código y Nombre');
+        }
+    });
+
+    document.getElementById('excel-upload').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const data = new Uint8Array(ev.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+            json.slice(1).forEach(row => {
+                cecos.push({
+                    ceco: row[0] || '', nombre: row[1] || '', responsable: row[2] || '',
+                    atributo: row[3] || '', agrupador: row[4] || '',
+                    email1: row[5] || '', email2: row[6] || '', email3: row[7] || ''
+                });
+            });
+            renderTable(document.getElementById('search-input').value);
+            showToast(`✅ ${file.name} procesado correctamente (solo CECO)`);
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    window.exportarExcel = () => {
+        if (cecos.length === 0) return showToast('No hay datos para exportar');
+        const ws = XLSX.utils.json_to_sheet(cecos);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "CECOS");
+        XLSX.writeFile(wb, 'CECOS_Aramark.xlsx');
+        showToast('✅ Excel de Centros de Costo descargado');
+    };
+
+    document.getElementById('search-input').addEventListener('input', () => renderTable(document.getElementById('search-input').value));
+
+    function editarCeco(i) { alert(`Editando CECO ${cecos[i].ceco} (simulado)`); }
+
+    function eliminarCeco(i) {
+        if (confirm(`¿Eliminar el CECO ${cecos[i].ceco}?`)) {
+            cecos.splice(i, 1);
+            renderTable(document.getElementById('search-input').value);
+            showToast('🗑️ Registro eliminado');
+        }
+    }
+
+    function auditoriaCeco(i) {
+        const c = cecos[i];
+        alert(`AUDITORÍA DEL REGISTRO\n\nCECO: ${c.ceco}\nNombre: ${c.nombre}\nResponsable: ${c.responsable}\nAtributo: ${c.atributo || '—'}\nAgrupador: ${c.agrupador || '—'}\n\nÚltima modificación: ${new Date().toLocaleString()}\nUsuario: Admin (simulado)`);
+    }
+
+    function auditoriaCentro(codigo) {
+        const cd = centros.find(c => c.codigo === codigo);
+        if (cd) {
+            alert(`AUDITORÍA DEL REGISTRO\n\nCódigo CD: ${cd.codigo}\nNombre: ${cd.nombre}\nUbicación: ${cd.ubicacion}\n\nÚltima modificación: ${new Date().toLocaleString()}\nUsuario: Admin (simulado)`);
+        }
+    }
+
+    function editCentro(codigo) {
+        alert(`Editando Centro de Distribución ${codigo} (simulado)...`);
+    }
+    function deleteCentro(codigo) {
+        if (confirm(`¿Eliminar el Centro de Distribución ${codigo}?`)) {
+            centros = centros.filter(c => c.codigo !== codigo);
+            renderCentrosTable();
+            showToast('🗑️ Centro de distribución eliminado');
+        }
+    }
+
+    function showToast(msg) {
+        const toast = document.createElement('div');
+        toast.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#333;color:white;padding:12px 20px;border-radius:8px;opacity:0;transition:all 0.3s;z-index:9999;';
+        toast.textContent = msg;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.style.opacity = 1, 10);
+        setTimeout(() => { toast.style.opacity = 0; setTimeout(() => toast.remove(), 300); }, 3000);
+    }
+
+    window.onload = () => {
+        const root = document.documentElement;
+        const themeToggle = document.getElementById('theme-toggle');
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        root.setAttribute('data-theme', savedTheme);
+        themeToggle.textContent = savedTheme === 'dark' ? '☀️ Modo claro' : '🌙 Modo oscuro';
+
+        themeToggle.addEventListener('click', () => {
+            const current = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            root.setAttribute('data-theme', current);
+            localStorage.setItem('theme', current);
+            themeToggle.textContent = current === 'dark' ? '☀️ Modo claro' : '🌙 Modo oscuro';
+        });
+
+        document.getElementById('desc-header').addEventListener('click', () => {
+            document.getElementById('page-description').classList.toggle('collapsed');
+        });
+
+        renderTable();
+        renderCentrosTable();
+    };
+</script>
+</body>
+</html>

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contabilización de Guías</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <style>
+        :root {
+            --brand-red: #d20000;
+            --brand-dark: #333333;
+            --bg-color: #f4f7f6;
+            --border-color: #e0e0e0;
+            --card-bg: #ffffff;
+            --text-muted: #6c757d;
+            --text-color: #333333;
+        }
+        :root[data-theme="dark"] {
+            --brand-dark: #f4f7f6;
+            --bg-color: #1f1f1f;
+            --border-color: #444444;
+            --card-bg: #2a2a2a;
+            --text-muted: #b0b0b0;
+            --text-color: #f4f7f6;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        header {
+            background-color: var(--brand-red);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+        .nav-left { display: flex; align-items: center; gap: 15px; }
+        .nav-left div { font-size: 1.2em; font-weight: bold; }
+        .theme-toggle {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.4);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 16px;
+            font-size: 0.85em;
+            cursor: pointer;
+        }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 0.9em;
+        }
+
+        /* HERO (sin cambios) */
+        .hero {
+            background-image: url('https://saferstoragesystems.com.au/wp-content/uploads/2016/04/Goods-Receiving-Header.jpg');
+            background-size: cover;
+            background-position: center;
+            height: 320px;
+            position: relative;
+            color: #fff;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            margin-top: 70px;
+        }
+        .hero-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.55); }
+        :root[data-theme="dark"] .hero-overlay { background-color: rgba(0,0,0,0.70); }
+        .hero h1 { font-size: 42px; margin: 0; font-weight: 700; }
+        .hero p { font-size: 22px; margin: 10px 0 0; }
+
+        /* BOTONES (sin cambios) */
+        .buttons-container {
+            max-width: 1200px;
+            margin: 30px auto;
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 32px 40px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            border: 1px solid var(--border-color);
+        }
+        .nav-links-minimal {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 18px 24px;
+        }
+        .nav-item {
+            flex: 0 1 30%;
+            min-width: 260px;
+            max-width: 290px;
+            height: 88px;
+            background: linear-gradient(90deg, #0066ff, #0052cc);
+            border-radius: 18px;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 1.02em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 0 26px;
+            box-shadow: 0 10px 22px rgba(0, 102, 255, 0.28);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .nav-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 32px rgba(0, 102, 255, 0.35);
+            background: linear-gradient(90deg, var(--brand-red), #c82333);
+        }
+        .nav-item i {
+            font-size: 1.45em;
+            margin-right: 12px;
+        }
+
+        /* === MEJORA: DESCRIPCIÓN COLAPSABLE (Modelo Oficial) === */
+        .page-description {
+            max-width: 1200px;
+            margin: 25px auto;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        .desc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px;
+            background-color: rgba(210,0,0,0.05);
+            cursor: pointer;
+        }
+        .desc-header h2 { margin: 0; font-size: 1.1em; color: var(--brand-red); }
+        .toggle-btn {
+            background: none;
+            border: none;
+            font-size: 1.4em;
+            color: var(--brand-red);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .desc-content {
+            padding: 0 25px 25px 25px;
+            max-height: 400px;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+        .page-description.collapsed .desc-content {
+            max-height: 0;
+            padding-bottom: 0;
+        }
+        .page-description.collapsed .toggle-btn {
+            transform: rotate(-90deg);
+        }
+
+        footer {
+            text-align: center;
+            padding: 18px;
+            background-color: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="nav-left">
+        <div style="font-size: 1.2em; font-weight: bold;">Contabilización de Guías</div>
+        <button class="theme-toggle" id="theme-toggle" aria-label="Cambiar tema">🌙 Modo oscuro</button>
+    </div>
+    <div class="nav-links">
+        <a href="landing.html">Volver</a>
+        <a href="Mapa.html">Mpa del Sitio</a>
+    </div>
+</header>
+
+<section class="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <h1>Contabilización de Guías</h1>
+        <p>Herramientas para la contabilización de guías</p>
+    </div>
+</section>
+
+<!-- DESCRIPCIÓN COLAPSABLE (Modelo Oficial aplicado) -->
+<section class="page-description" id="page-description">
+    <div class="desc-header" id="desc-header">
+        <h2>Descripción de la Página (Especificación Funcional - Modelo Oficial)</h2>
+        <button class="toggle-btn" id="toggle-desc">▼</button>
+    </div>
+    <div class="desc-content">
+        <p><strong>¿Qué es una Guía y cómo se procesa?</strong><br>
+        Una <strong>Guía</strong> es el documento electrónico que acompaña cada envío de mercancía desde el Centro de Distribución (CD) hacia un Centro de Costo (CECO) de Aramark. Contiene información clave: número de guía, contrato asociado, cantidad de producto, fecha de envío y estado de entrega.<br><br>
+        
+        <strong>Proceso completo paso a paso:</strong><br>
+        1. La guía se lee desde la Vista de la base datos de Brand.<br>
+        2. Se aplican las reglas de negocio predefinidas (se identifican CECOS centralizados y reglas)<br>
+        3. El sistema valida si cumple todas las condiciones.<br>
+        4. Si es válida queda "Pendiente" → el BOT registra automáticamente la entrada en Brand (contabilización).<br>
+        5. Si presenta restricción → se marca como “Restricción” para revisión manual.<br>
+        6. En cualquier caso, se genera registro histórico y notificación al usuario responsable.<br><br>
+        
+        Este módulo centraliza todo el flujo, garantizando trazabilidad total y cumplimiento normativo.<br><br>
+        
+        <strong>INSTRUCCIÓN OBLIGATORIA PARA REPLICACIÓN (USAR COMO MODELO OFICIAL):</strong><br>
+        Esta página debe usarse como modelo oficial en TODOS los cambios y módulos que requieran replicar la estructura. Copiar EXACTAMENTE todo el HTML + CSS + JS.
+        </p>
+    </div>
+</section>
+
+<div class="buttons-container">
+    <nav class="nav-links-minimal">
+        <a href="guias_pendientes.html" class="nav-item">
+            <i class="fas fa-file-invoice"></i>
+            <span>Guías Pendientes</span>
+        </a>
+        <a href="dashboard.html" class="nav-item">
+            <i class="fas fa-chart-line"></i>
+            <span>Dashboard</span>
+        </a>
+        <a href="monitoreo.html" class="nav-item">
+            <i class="fas fa-heartbeat"></i>
+            <span>Monitoreo</span>
+        </a>
+        <a href="centros_de_costo.html" class="nav-item">
+            <i class="fas fa-building"></i>
+            <span>Centros de Costo</span>
+        </a>
+        <a href="configuracion_de_reglas.html" class="nav-item">
+            <i class="fas fa-cogs"></i>
+            <span>Configuración de Reglas</span>
+        </a>
+    </nav>
+</div>
+
+<footer>
+    Prototipo Completo para Sistema Aramark © 2026
+</footer>
+
+<script>
+/* ================================================
+   MODELO OFICIAL - CONTABILIZACIÓN DE GUÍAS
+   ================================================ */
+    const root = document.documentElement;
+    const themeToggle = document.getElementById('theme-toggle');
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    root.setAttribute('data-theme', savedTheme);
+    themeToggle.textContent = savedTheme === 'dark' ? '☀️ Modo claro' : '🌙 Modo oscuro';
+
+    themeToggle.addEventListener('click', () => {
+        const current = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', current);
+        localStorage.setItem('theme', current);
+        themeToggle.textContent = current === 'dark' ? '☀️ Modo claro' : '🌙 Modo oscuro';
+    });
+
+    if (!localStorage.getItem('user') || !localStorage.getItem('profile')) {
+        window.location.href = 'index.html';
+    }
+
+    // === COLAPSABLE DESCRIPCIÓN (set de mejoras aplicado) ===
+    document.getElementById('desc-header').addEventListener('click', () => {
+        document.getElementById('page-description').classList.toggle('collapsed');
+    });
+</script>
+</body>
+</html>
